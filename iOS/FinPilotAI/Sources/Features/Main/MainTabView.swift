@@ -25,7 +25,7 @@ struct MainTabView: View {
             
             ReportsView()
                 .tabItem {
-                    Label("AI Insights", systemImage: "sparkles")
+                    Label("Insights", systemImage: "sparkles")
                 }
                 .tag(3)
             

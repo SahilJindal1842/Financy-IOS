@@ -21,7 +21,7 @@ struct ReportsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Reports & Insights")
+                    Text("Insights")
                         .font(FinPilotTypography.title3)
                         .foregroundColor(FinPilotColors.textPrimary)
                 }
@@ -38,7 +38,7 @@ struct ReportsView: View {
     
     private var insightsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("AI Insights")
+            Text("Insights")
                 .font(FinPilotTypography.title3)
                 .foregroundColor(FinPilotColors.textPrimary)
             

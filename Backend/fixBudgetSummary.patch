@@ -1,0 +1,24 @@
+--- src/controllers/budgetController.ts
++++ src/controllers/budgetController.ts
+@@ -118,7 +118,22 @@
+       };
+     });
+ 
+-    res.json(summary);
++    const totalBudget = summary.reduce((acc, curr) => acc + curr.amount, 0);
++    const totalSpent = summary.reduce((acc, curr) => acc + curr.spent, 0);
++    const remainingBudget = totalBudget - totalSpent;
++    const overallUsagePercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
++
++    const response = {
++      totalBudget,
++      totalSpent,
++      remainingBudget,
++      overallUsagePercentage,
++      budgets: summary
++    };
++
++    res.json(response);
+   } catch (error) {
+     console.error("Error fetching budget summary:", error);
+     res.status(500).json({ error: "Internal server error" });

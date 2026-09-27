@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const recurringController_1 = require("../controllers/recurringController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticateToken);
+router.get("/", recurringController_1.getRecurringTransactions);
+router.post("/", recurringController_1.createRecurringTransaction);
+router.put("/:id", recurringController_1.updateRecurringTransaction);
+router.delete("/:id", recurringController_1.deleteRecurringTransaction);
+exports.default = router;

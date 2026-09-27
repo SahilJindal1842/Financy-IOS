@@ -1,0 +1,66 @@
+--- src/controllers/budgetController.ts
++++ src/controllers/budgetController.ts
+@@ -148,3 +148,46 @@
+     res.status(500).json({ error: "Internal server error" });
+   }
+ };
++
++export const setBulkBudgets = async (req: AuthRequest, res: Response) => {
++  try {
++    const scope = getQueryScope(req);
++    const userId = scope.user_id;
++    if (!userId && !req.user?.role) return res.status(401).json({ error: "Unauthorized" });
++
++    const { budgets } = req.body;
++    let monthStr = req.body.month as string;
++
++    if (!Array.isArray(budgets)) {
++      return res.status(400).json({ error: "budgets array is required" });
++    }
++
++    if (!monthStr || !/^\d{4}-\d{2}$/.test(monthStr)) {
++      const now = new Date();
++      monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
++    }
++
++    const monthDate = `${monthStr}-01`;
++
++    await db.transaction(async (trx) => {
++      for (const b of budgets) {
++        const existing = await trx("budgets")
++          .where({ user_id: userId, category_id: b.category_id, month: monthDate })
++          .first();
++
++        if (existing) {
++          await trx("budgets")
++            .where({ id: existing.id })
++            .update({ amount: Number(b.amount) });
++        } else {
++          await trx("budgets")
++            .insert({ user_id: userId, category_id: b.category_id, amount: Number(b.amount), month: monthDate });
++        }
++      }
++    });
++
++    res.json({ success: true });
++  } catch (error) {
++    console.error("Error setting bulk budgets:", error);
++    res.status(500).json({ error: "Internal server error" });
++  }
++};
+--- src/routes/budgetRoutes.ts
++++ src/routes/budgetRoutes.ts
+@@ -1,9 +1,11 @@
+ import { Router } from "express";
+-import { getBudgetSummary, setBudget } from "../controllers/budgetController";
++import { getBudgetSummary, setBudget, setBulkBudgets } from "../controllers/budgetController";
+ import { authenticateToken } from "../middleware/auth";
+ 
+ const router = Router();
+ 
+ router.use(authenticateToken as any);
+ router.get("/summary", getBudgetSummary as any);
++router.post("/set", setBudget as any);
++router.post("/set-bulk", setBulkBudgets as any);
+ 
+ export default router;

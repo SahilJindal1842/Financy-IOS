@@ -1,0 +1,142 @@
+import { Response, NextFunction } from "express";
+import { AuthRequest } from "../middleware/auth";
+import db from "../db/db";
+import { getQueryScope } from "../utils/rbacUtils";
+import { z } from "zod";
+
+const transactionSchema = z.object({
+  type: z.enum(["INCOME", "EXPENSE", "TRANSFER"]),
+  amount: z.number().positive("Amount must be greater than 0"),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date format" }),
+  account_id: z.string().uuid("Invalid account_id UUID"),
+  destination_account_id: z.string().uuid("Invalid destination_account_id UUID").optional().nullable(),
+  category_id: z.string().uuid("Invalid category_id UUID").optional().nullable(),
+  description: z.string().optional().nullable(),
+  notes: z.string().optional().nullable()
+});
+
+export const getTransactions = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const scope = getQueryScope(req);
+    const whereClause = scope.user_id ? { "transactions.user_id": scope.user_id } : scope;
+    
+    const transactions = await db("transactions")
+      .leftJoin("categories", "transactions.category_id", "categories.id")
+      .where(whereClause)
+      .select(
+        "transactions.*",
+        "categories.name as category_name",
+        "categories.icon as category_icon",
+        "categories.color as category_color"
+      )
+      .orderBy("transactions.date", "desc")
+      .orderBy("transactions.created_at", "desc");
+
+    const formatted = transactions.map((t) => ({
+      id: t.id,
+      userId: t.user_id,
+      accountId: t.account_id,
+      categoryId: t.category_name || t.category_id,
+      amount: t.type === "EXPENSE" ? -Math.abs(Number(t.amount)) : Math.abs(Number(t.amount)),
+      type: (t.type || "EXPENSE").toLowerCase(),
+      date: t.date,
+      note: t.notes || t.description,
+      merchant: t.description || t.category_name || "Expense",
+      destinationAccountId: t.destination_account_id,
+      createdAt: t.created_at,
+      updatedAt: t.updated_at
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createTransaction = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const rawType = (req.body.type || "EXPENSE").toUpperCase();
+    const type = ["INCOME", "EXPENSE", "TRANSFER"].includes(rawType) ? rawType : "EXPENSE";
+
+    const rawAmount = parseFloat(String(req.body.amount || 0));
+    const amount = Math.abs(rawAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ error: "Amount must be greater than 0" });
+    }
+
+    const dateVal = req.body.date ? new Date(req.body.date) : new Date();
+    const date = isNaN(dateVal.getTime()) ? new Date().toISOString().split("T")[0] : dateVal.toISOString().split("T")[0];
+
+    // Ensure valid account_id belonging to user
+    let accountId = req.body.account_id || req.body.accountId;
+    const isUUID = accountId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(accountId);
+
+    if (!isUUID) {
+      let userAccount = await db("accounts").where({ user_id: userId }).first();
+      if (!userAccount) {
+        [userAccount] = await db("accounts").insert({
+          user_id: userId,
+          name: "Primary Account",
+          type: "cash",
+          currency_code: "INR"
+        }).returning("*");
+      }
+      accountId = userAccount.id;
+    }
+
+    // Resolve category_id (UUID or Name)
+    let categoryId = req.body.category_id || req.body.categoryId || req.body.category;
+    if (categoryId) {
+      const isCatUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
+      if (!isCatUUID) {
+        let cat = await db("categories").where({ name: categoryId }).first();
+        if (!cat) {
+          [cat] = await db("categories").insert({
+            name: categoryId,
+            type: type === "INCOME" ? "income" : "expense"
+          }).returning("*");
+        }
+        categoryId = cat.id;
+      }
+    }
+
+    const description = req.body.description || req.body.merchant || req.body.category || "Expense";
+    const notes = req.body.notes || req.body.note || null;
+    const destinationAccountId = type === "TRANSFER" ? (req.body.destination_account_id || req.body.destinationAccountId) : null;
+
+    const [transaction] = await db("transactions").insert({
+      user_id: userId,
+      type,
+      amount,
+      date,
+      account_id: accountId,
+      destination_account_id: destinationAccountId,
+      category_id: type === "TRANSFER" ? null : categoryId,
+      description,
+      notes
+    }).returning("*");
+
+    res.status(201).json({
+      id: transaction.id,
+      userId: transaction.user_id,
+      accountId: transaction.account_id,
+      categoryId: req.body.category || req.body.categoryId || transaction.category_id,
+      amount: transaction.type === "EXPENSE" ? -Math.abs(Number(transaction.amount)) : Math.abs(Number(transaction.amount)),
+      type: transaction.type.toLowerCase(),
+      date: transaction.date,
+      note: transaction.notes,
+      merchant: transaction.description,
+      destinationAccountId: transaction.destination_account_id,
+      createdAt: transaction.created_at,
+      updatedAt: transaction.updated_at
+    });
+  } catch (error) {
+    next(error);
+  }
+};

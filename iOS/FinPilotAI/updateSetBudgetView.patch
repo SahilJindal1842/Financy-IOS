@@ -1,0 +1,103 @@
+--- Sources/Features/Budgets/BudgetsView.swift
++++ Sources/Features/Budgets/BudgetsView.swift
+@@ -155,54 +155,59 @@
+ 
+ struct SetBudgetView: View {
+     @Environment(\.presentationMode) var presentationMode
+     @ObservedObject var viewModel: BudgetsViewModel
+-    @State var initialCategoryId: String?
+     
+-    @State private var amount: String = ""
+-    @State private var selectedCategoryId: String = ""
++    @State private var budgetAmounts: [String: String] = [:]
++    
++    var expenseCategories: [Category] {
++        viewModel.categories.filter { $0.type.lowercased() == "expense" }
++    }
+     
+     var body: some View {
+         NavigationView {
+             Form {
+-                Section(header: Text("Category")) {
+-                    Picker("Category", selection: $selectedCategoryId) {
+-                        ForEach(viewModel.categories, id: \.id) { cat in
+-                            Text(cat.name).tag(cat.id)
+-                        }
++                Section(header: Text("Expense Categories")) {
++                    ForEach(expenseCategories, id: \.id) { cat in
++                        HStack {
++                            Image(systemName: cat.icon ?? "creditcard.fill")
++                                .foregroundColor(FinPilotColors.primary)
++                                .frame(width: 24, height: 24)
++                            Text(cat.name)
++                            Spacer()
++                            Text("₹")
++                                .foregroundColor(FinPilotColors.textSecondary)
++                            TextField("0", text: Binding(
++                                get: { budgetAmounts[cat.id] ?? "" },
++                                set: { budgetAmounts[cat.id] = $0 }
++                            ))
++                            .keyboardType(.decimalPad)
++                            .multilineTextAlignment(.trailing)
++                            .frame(width: 100)
++                        }
+                     }
+                 }
+                 
+-                Section(header: Text("Amount")) {
+-                    TextField("Enter amount", text: $amount)
+-                        .keyboardType(.decimalPad)
+-                }
+-                
+                 Section {
+                     Button("Save Budget") {
+-                        if let amt = Double(amount.replacingOccurrences(of: ",", with: "")) {
+-                            Task {
+-                                await viewModel.setBudget(categoryId: selectedCategoryId, amount: amt)
+-                                presentationMode.wrappedValue.dismiss()
++                        var bulkData: [[String: Any]] = []
++                        for cat in expenseCategories {
++                            if let amtString = budgetAmounts[cat.id],
++                               let amt = Double(amtString.replacingOccurrences(of: ",", with: "")) {
++                                bulkData.append(["category_id": cat.id, "amount": amt])
++                            } else {
++                                bulkData.append(["category_id": cat.id, "amount": 0.0])
+                             }
+                         }
++                        
++                        Task {
++                            await viewModel.setBulkBudgets(budgets: bulkData)
++                            presentationMode.wrappedValue.dismiss()
++                        }
+                     }
+                     .frame(maxWidth: .infinity, alignment: .center)
+                     .foregroundColor(FinPilotColors.primary)
+                 }
+             }
+             .navigationTitle("Set Budget")
+             .navigationBarTitleDisplayMode(.inline)
+             .toolbar {
+@@ -211,13 +216,8 @@
+                     }
+                 }
+             }
+             .onAppear {
+-                if let initialCategoryId = initialCategoryId, !initialCategoryId.isEmpty {
+-                    selectedCategoryId = initialCategoryId
+-                    if let existingBudget = viewModel.summary?.budgets.first(where: { $0.categoryId == initialCategoryId }) {
+-                        amount = String(existingBudget.amount)
+-                    }
+-                } else if let firstCat = viewModel.categories.first {
+-                    selectedCategoryId = firstCat.id
+-                }
++                for cat in expenseCategories {
++                    if let existingBudget = viewModel.summary?.budgets.first(where: { $0.categoryId == cat.id }) {
++                        budgetAmounts[cat.id] = String(Int(existingBudget.amount))
++                    } else {
++                        budgetAmounts[cat.id] = ""
++                    }
++                }
+             }
+         }
+     }
+ }

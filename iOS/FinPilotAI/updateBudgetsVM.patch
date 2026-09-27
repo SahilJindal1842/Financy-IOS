@@ -1,0 +1,33 @@
+--- Sources/Features/Budgets/BudgetsViewModel.swift
++++ Sources/Features/Budgets/BudgetsViewModel.swift
+@@ -2,6 +2,11 @@
+ 
+ @MainActor
+ final class BudgetsViewModel: ObservableObject {
+     @Published var isLoading = false
+     @Published var summary: BudgetSummaryResponse?
+     @Published var categories: [Category] = []
+@@ -23,4 +28,21 @@
+             errorMessage = error.localizedDescription
+         }
+     }
++    
++    func setBudget(categoryId: String, amount: Double) async {
++        isLoading = true
++        
++        let params: [String: Any] = [
++            "category_id": categoryId,
++            "amount": amount
++        ]
++        
++        do {
++            let data = try JSONSerialization.data(withJSONObject: params)
++            let _: Budget = try await APIManager.shared.request(endpoint: "/budgets/set", method: "POST", body: data)
++            await fetchBudgets()
++        } catch {
++            print("Failed to set budget: \(error)")
++            errorMessage = error.localizedDescription
++            isLoading = false
++        }
++    }
+ }

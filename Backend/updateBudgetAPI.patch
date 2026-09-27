@@ -1,0 +1,65 @@
+--- src/controllers/budgetController.ts
++++ src/controllers/budgetController.ts
+@@ -107,3 +107,44 @@
+     res.status(500).json({ error: "Internal server error" });
+   }
+ };
++
++export const setBudget = async (req: AuthRequest, res: Response) => {
++  try {
++    const scope = getQueryScope(req);
++    const userId = scope.user_id;
++    if (!userId && !req.user?.role) return res.status(401).json({ error: "Unauthorized" });
++
++    const { category_id, amount } = req.body;
++    let monthStr = req.body.month as string;
++
++    if (!category_id || amount === undefined) {
++      return res.status(400).json({ error: "category_id and amount are required" });
++    }
++
++    if (!monthStr || !/^\d{4}-\d{2}$/.test(monthStr)) {
++      const now = new Date();
++      monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
++    }
++
++    const monthDate = `${monthStr}-01`;
++
++    // Check if budget exists
++    const existing = await db("budgets")
++      .where({ user_id: userId, category_id, month: monthDate })
++      .first();
++
++    let result;
++    if (existing) {
++      result = await db("budgets")
++        .where({ id: existing.id })
++        .update({ amount: Number(amount) })
++        .returning("*");
++    } else {
++      result = await db("budgets")
++        .insert({ user_id: userId, category_id, amount: Number(amount), month: monthDate })
++        .returning("*");
++    }
++
++    res.json(result[0]);
++  } catch (error) {
++    console.error("Error setting budget:", error);
++    res.status(500).json({ error: "Internal server error" });
++  }
++};
+--- src/routes/budgetRoutes.ts
++++ src/routes/budgetRoutes.ts
+@@ -1,5 +1,5 @@
+ import { Router } from "express";
+-import { getBudgetSummary } from "../controllers/budgetController";
++import { getBudgetSummary, setBudget } from "../controllers/budgetController";
+ import { authenticateToken } from "../middleware/auth";
+ 
+ const router = Router();
+ 
+ router.use(authenticateToken as any);
+ router.get("/summary", getBudgetSummary as any);
++router.post("/set", setBudget as any);
+ 
+ export default router;

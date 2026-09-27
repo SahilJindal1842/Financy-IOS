@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const insightController_1 = require("../controllers/insightController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticateToken);
+router.get("/", insightController_1.getInsights);
+router.get("/alerts", insightController_1.getBudgetAlerts);
+exports.default = router;

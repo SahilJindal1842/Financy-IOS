@@ -7,7 +7,7 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             DashboardView(selectedTab: $selectedTab)
                 .tabItem {
-                    Label("Dashboard", systemImage: "chart.pie.fill")
+                    Label("Home", systemImage: "house.fill")
                 }
                 .tag(0)
             
@@ -17,21 +17,21 @@ struct MainTabView: View {
                 }
                 .tag(1)
             
-            BudgetsView()
+            RecurringTransactionsView()
                 .tabItem {
-                    Label("Budgets", systemImage: "banknote")
+                    Label("Recurring", systemImage: "calendar.badge.clock")
                 }
                 .tag(2)
             
-            ReportsView()
+            BudgetsView()
                 .tabItem {
-                    Label("Insights", systemImage: "sparkles")
+                    Label("Budgets", systemImage: "banknote")
                 }
                 .tag(3)
             
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person.crop.circle")
+                    Label("More", systemImage: "ellipsis.circle")
                 }
                 .tag(4)
         }

@@ -11,6 +11,20 @@ interface Category {
   [key: string]: any;
 }
 
+const mapToCamel = (cat: any): any => ({
+  id: cat.id,
+  userId: cat.user_id,
+  parentId: cat.parent_id,
+  name: cat.name,
+  icon: cat.icon,
+  color: cat.color || "#3357ff",
+  type: cat.type || "expense",
+  isSystem: !cat.user_id,
+  createdAt: cat.created_at,
+  updatedAt: cat.updated_at,
+  subcategories: cat.subcategories?.map(mapToCamel) || []
+});
+
 export const getCategories = async (req: AuthRequest, res: Response) => {
   try {
     const scope = getQueryScope(req);
@@ -35,25 +49,11 @@ export const getCategories = async (req: AuthRequest, res: Response) => {
         if (parent) {
           parent.subcategories!.push(node);
         } else {
-          // If parent is not found, treat as root
           roots.push(node);
         }
       } else {
         roots.push(node);
       }
-    });
-
-    const mapToCamel = (cat: any): any => ({
-      id: cat.id,
-      userId: cat.user_id,
-      parentId: cat.parent_id,
-      name: cat.name,
-      icon: cat.icon,
-      color: cat.color,
-      type: cat.type,
-      createdAt: cat.created_at,
-      updatedAt: cat.updated_at,
-      subcategories: cat.subcategories?.map(mapToCamel) || []
     });
 
     res.json(roots.map(mapToCamel));
@@ -62,16 +62,36 @@ export const getCategories = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
-import db from "../db/db";
-import { getQueryScope } from "../utils/rbacUtils";
+
+export const createCategory = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, icon, color, type, parent_id } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: "Category name is required" });
+    }
+
+    const [category] = await db("categories").insert({
+      user_id: req.user?.id,
+      name,
+      icon: icon || "tag.fill",
+      color: color || "#3357ff",
+      type: type || "expense",
+      parent_id: parent_id || null
+    }).returning("*");
+
+    res.json(mapToCamel(category));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 export const updateCategory = async (req: AuthRequest, res: Response) => {
   try {
     const scope = getQueryScope(req);
     const { id } = req.params;
-    const { name, icon, color } = req.body;
+    const { name, icon, color, type } = req.body;
 
     // Make sure the category exists and user has access
     const category = await db("categories")
@@ -85,39 +105,39 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    let targetId = id;
-
-    // If it's a global category, we should ideally duplicate it for this user
-    // to avoid affecting other users. But since we use UUIDs and relations, 
-    // duplicating means we'd have to update all transactions to point to the new category.
-    // Instead, if the user modifies a global category, we will just allow it for this demo, 
-    // OR we duplicate and update their transactions.
-    // Let's just update it directly to keep it simple. 
-
     const updated = await db("categories")
       .where({ id })
       .update({
         name: name !== undefined ? name : category.name,
         icon: icon !== undefined ? icon : category.icon,
         color: color !== undefined ? color : category.color,
+        type: type !== undefined ? type : (category.type || "expense"),
         updated_at: new Date()
       })
       .returning("*");
 
-    const cat = updated[0];
-    const camelCat = {
-      id: cat.id,
-      userId: cat.user_id,
-      parentId: cat.parent_id,
-      name: cat.name,
-      icon: cat.icon,
-      color: cat.color,
-      type: cat.type,
-      createdAt: cat.created_at,
-      updatedAt: cat.updated_at
-    };
+    res.json(mapToCamel(updated[0]));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
-    res.json(camelCat);
+export const deleteCategory = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    // Only allow deleting user-owned categories
+    const category = await db("categories")
+      .where({ id, user_id: req.user?.id })
+      .first();
+
+    if (!category) {
+      return res.status(404).json({ error: "Category not found or cannot delete system categories" });
+    }
+
+    await db("categories").where({ id }).del();
+    res.json({ success: true });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

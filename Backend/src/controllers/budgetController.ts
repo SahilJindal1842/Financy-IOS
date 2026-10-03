@@ -24,19 +24,24 @@ export const getBudgetSummary = async (req: AuthRequest, res: Response) => {
     // Fetch budgets for the user for this month
     const budgets = await db("budgets")
       .where(scope)
-      .andWhere("month", startDate);
+      .andWhere("month", startDate)
+      .whereNull("deleted_at");
 
     // Fetch all categories to build the hierarchy
     const categories = await db("categories")
-      .where(scope)
-      .orWhereNull("user_id");
+      .where(function() {
+        this.where(scope).orWhereNull("user_id")
+      })
+      .whereNull("deleted_at")
+      .whereNull("deleted_at");
 
     // Fetch expenses for the month
     const expenses = await db("transactions")
       .where(scope)
       .andWhere("type", "EXPENSE")
       .andWhere("date", ">=", startDate)
-      .andWhere("date", "<", endDate);
+      .andWhere("date", "<", endDate)
+      .whereNull("deleted_at");
 
     // Group expenses by category_id
     const expensesByCategory: Record<string, number> = {};
@@ -64,13 +69,15 @@ export const getBudgetSummary = async (req: AuthRequest, res: Response) => {
     const prevBudgets = await db("budgets")
       .where(scope)
       .andWhere("month", prevStartDate)
-      .andWhere("rollover_enabled", true);
+      .andWhere("rollover_enabled", true)
+      .whereNull("deleted_at");
 
     const prevExpenses = await db("transactions")
       .where(scope)
       .andWhere("type", "EXPENSE")
       .andWhere("date", ">=", prevStartDate)
-      .andWhere("date", "<", startDate);
+      .andWhere("date", "<", startDate)
+      .whereNull("deleted_at");
 
     const prevExpensesByCategory: Record<string, number> = {};
     for (const exp of prevExpenses) {

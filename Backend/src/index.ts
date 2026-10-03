@@ -1,6 +1,9 @@
 import express, { NextFunction, Request, Response } from "express";
+import path from "path";
 import cors from "cors";
 import dotenv from "dotenv";
+import { startRecurringJob } from "./jobs/recurringJob";
+
 import authRoutes from "./routes/authRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
 import accountRoutes from "./routes/accountRoutes";
@@ -12,6 +15,7 @@ import reportRoutes from "./routes/reportRoutes";
 import insightRoutes from "./routes/insightRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import userRoutes from "./routes/userRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
 
 dotenv.config();
 
@@ -19,7 +23,9 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -32,6 +38,7 @@ app.use("/api/savings-goals", savingsGoalRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/insights", insightRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });

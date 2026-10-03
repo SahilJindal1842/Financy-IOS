@@ -226,3 +226,57 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const socialLogin = async (req: Request, res: Response) => {
+  try {
+    const { provider, email, name, avatar } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required for social login" });
+    }
+
+    let user = await db("users").where({ email }).first();
+    if (!user) {
+      const randomPassword = Math.random().toString(36).slice(-10);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      const [newUser] = await db("users")
+        .insert({
+          email,
+          name: name || `${provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : "Social"} User`,
+          password_hash: hashedPassword,
+          status: "ACTIVE",
+          email_verified: true,
+          avatar: avatar || null,
+          role: "USER"
+        })
+        .returning("*");
+      user = newUser;
+    } else {
+      if (user.status === "PENDING") {
+        await db("users").where({ id: user.id }).update({ status: "ACTIVE", email_verified: true });
+        user.status = "ACTIVE";
+      }
+      await db("users").where({ id: user.id }).update({ last_login_at: new Date() });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role || "user" },
+      process.env.JWT_SECRET || "supersecretjwt",
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        mobile_number: user.mobile_number,
+        name: user.name,
+        role: user.role || "user",
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error("Social login error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

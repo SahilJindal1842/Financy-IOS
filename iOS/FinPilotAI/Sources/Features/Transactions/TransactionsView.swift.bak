@@ -1,0 +1,92 @@
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 16) {
+                // Segmented Picker
+                HStack {
+                    ForEach(0..<filters.count, id: \.self) { index in
+                        Button(action: {
+                            selectedFilter = index
+                        }) {
+                            Text(filters[index])
+                                .font(FinPilotTypography.subheadline)
+                                .foregroundColor(selectedFilter == index ? .white : FinPilotColors.textSecondary)
+                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity)
+                                .background(selectedFilter == index ? FinPilotColors.primary : Color.clear)
+                                .cornerRadius(20)
+                        }
+                    }
+                }
+                .padding(4)
+                .background(FinPilotColors.surface)
+                .cornerRadius(24)
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(FinPilotColors.error)
+                        .padding()
+                } else if viewModel.transactions.isEmpty && !viewModel.isLoading {
+                    VStack(spacing: 16) {
+                        Image(systemName: "tray")
+                            .font(.system(size: 48))
+                            .foregroundColor(FinPilotColors.textSecondary)
+                        Text("No transactions yet. Tap + to add one!")
+                            .font(FinPilotTypography.headline)
+                            .foregroundColor(FinPilotColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        ForEach(filteredGroups) { group in
+                            Section(header: Text(group.dateStr)) {
+                                ForEach(group.transactions) { tx in
+                                    TransactionsTabRow(tx: tx)
+                                        .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                                        .listRowBackground(Color.clear)
+                                        .listRowSeparator(.hidden)
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                            Button(role: .destructive) {
+                                                Task {
+                                                    await viewModel.deleteTransaction(id: tx.id)
+                                                }
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                        }
+                                }
+                            }
+                        }
+                    }
+                    .listStyle(PlainListStyle())
+                    .padding(.bottom, 24)
+                }
+            }
+            .background(FinPilotColors.background.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Transactions")
+                        .font(FinPilotTypography.title3)
+                        .foregroundColor(FinPilotColors.textPrimary)
+                }
+            }
+            .task {
+                await viewModel.fetchTransactions()
+                await viewModel.fetchCategories()
+            }
+            .refreshable {
+                await viewModel.fetchTransactions()
+                await viewModel.fetchCategories()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .transactionUpdated)) { _ in
+                Task {
+                    await viewModel.fetchTransactions()
+                }
+            }
+        }
+    }
+    
+    private var filteredGroups

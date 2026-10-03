@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MockTransaction: Identifiable {
-    let id = UUID()
+    let id: String
     let icon: String
     let iconColor: Color
     let title: String
@@ -11,9 +11,33 @@ struct MockTransaction: Identifiable {
 }
 
 struct MockTransactionGroup: Identifiable {
-    let id = UUID()
+    let id: String
     let dateStr: String
     let transactions: [MockTransaction]
+}
+
+
+struct SwipeToDeleteRow: View {
+    let tx: MockTransaction
+    @ObservedObject var viewModel: TransactionsViewModel
+    
+    var body: some View {
+        TransactionsTabRow(tx: tx)
+            .padding(.vertical, 8)
+            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button(role: .destructive) {
+                    Task {
+                        await viewModel.deleteTransaction(id: tx.id)
+                    }
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                .tint(FinPilotColors.error)
+            }
+    }
 }
 
 struct TransactionsView: View {
@@ -46,12 +70,14 @@ struct TransactionsView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 
-                ScrollView {
-                    if let errorMessage = viewModel.errorMessage {
+                if let errorMessage = viewModel.errorMessage {
+                    ScrollView {
                         Text(errorMessage)
                             .foregroundColor(FinPilotColors.error)
                             .padding()
-                    } else if viewModel.transactions.isEmpty && !viewModel.isLoading {
+                    }
+                } else if viewModel.transactions.isEmpty && !viewModel.isLoading {
+                    ScrollView {
                         VStack(spacing: 16) {
                             Image(systemName: "tray")
                                 .font(.system(size: 48))
@@ -63,27 +89,24 @@ struct TransactionsView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 60)
-                    } else {
-                        VStack(spacing: 24) {
-                            ForEach(filteredGroups) { group in
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text(group.dateStr)
-                                        .font(FinPilotTypography.headline)
-                                        .foregroundColor(FinPilotColors.textPrimary)
-                                        .padding(.horizontal, 20)
-                                    
-                                    VStack(spacing: 12) {
-                                        ForEach(group.transactions) { tx in
-                                            TransactionsTabRow(tx: tx)
-                                                .padding(.horizontal, 20)
-                                        }
-                                    }
+                    }
+                } else {
+                    List {
+                        ForEach(filteredGroups) { group in
+                            Section(header: Text(group.dateStr)
+                                .font(FinPilotTypography.headline)
+                                .foregroundColor(FinPilotColors.textPrimary)
+                                .textCase(nil)
+                                .listRowInsets(EdgeInsets(top: 20, leading: 20, bottom: 8, trailing: 20))
+                                .listRowBackground(Color.clear)
+                            ) {
+                                ForEach(group.transactions) { tx in
+                                    SwipeToDeleteRow(tx: tx, viewModel: viewModel)
                                 }
                             }
                         }
-                        .padding(.bottom, 24)
-                        
                     }
+                    .listStyle(PlainListStyle())
                 }
             }
             .background(FinPilotColors.background.ignoresSafeArea())
@@ -141,6 +164,7 @@ struct TransactionsView: View {
             let txs = grouped[key] ?? []
             let mockTxs = txs.map { tx in
                 MockTransaction(
+                    id: tx.id,
                     icon: iconForCategory(tx.categoryId ?? ""),
                     iconColor: colorForCategory(tx.categoryId ?? ""),
                     title: tx.merchant ?? "Unknown",
@@ -149,7 +173,7 @@ struct TransactionsView: View {
                     isIncome: tx.amount >= 0
                 )
             }
-            return MockTransactionGroup(dateStr: key, transactions: mockTxs)
+            return MockTransactionGroup(id: UUID().uuidString, dateStr: key, transactions: mockTxs)
         }
     }
     
@@ -229,8 +253,6 @@ struct AddTransactionView: View {
     @State private var toAccount: String = "Savings"
     let mockAccounts = ["Checking", "Savings", "Credit Card", "Investment"]
     
-    @State private var showingNewCategoryAlert = false
-    @State private var newCategoryName = ""
     
     // We will merge fetched categories with the user's custom one if they type it.
 
@@ -288,17 +310,7 @@ struct AddTransactionView: View {
         .task {
             await viewModel.fetchCategories()
         }
-        .alert("New Category", isPresented: $showingNewCategoryAlert) {
-            TextField("Category Name", text: $newCategoryName)
-            Button("Add") {
-                if !newCategoryName.isEmpty {
-                    selectedCategory = newCategoryName
-                }
-            }
-            Button("Cancel", role: .cancel) {
-                newCategoryName = ""
-            }
-        }
+
         .alert(isPresented: $showingBudgetAlert) {
             Alert(
                 title: Text("Budget Exceeded"),
@@ -354,27 +366,7 @@ struct AddTransactionView: View {
                     }
                 }
                 
-                if !newCategoryName.isEmpty && !displayCategories.contains(where: { $0.name == newCategoryName }) {
-                    CategoryIcon(
-                        title: newCategoryName,
-                        icon: "star.fill",
-                        color: .blue,
-                        isSelected: selectedCategory == newCategoryName
-                    )
-                    .onTapGesture {
-                        selectedCategory = newCategoryName
-                    }
-                }
-                
-                CategoryIcon(
-                    title: "Add New",
-                    icon: "plus",
-                    color: .gray,
-                    isSelected: false
-                )
-                .onTapGesture {
-                    showingNewCategoryAlert = true
-                }
+
             }
         }
     }

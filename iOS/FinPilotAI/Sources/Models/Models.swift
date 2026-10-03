@@ -4,9 +4,11 @@ struct User: Codable, Identifiable {
     let id: String
     let email: String?
     let name: String
+    let role: String?
     let monthlyIncome: Double?
     let currency: String?
     let primaryGoal: String?
+    let avatar: String?
     let createdAt: Date?
     let updatedAt: Date?
     
@@ -14,24 +16,28 @@ struct User: Codable, Identifiable {
         id: String,
         email: String? = nil,
         name: String,
+        role: String? = nil,
         monthlyIncome: Double? = nil,
         currency: String? = nil,
         primaryGoal: String? = nil,
+        avatar: String? = nil,
         createdAt: Date? = nil,
         updatedAt: Date? = nil
     ) {
         self.id = id
         self.email = email
         self.name = name
+        self.role = role
         self.monthlyIncome = monthlyIncome
         self.currency = currency
         self.primaryGoal = primaryGoal
+        self.avatar = avatar
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, email, name, currency
+        case id, email, name, role, currency, avatar
         case monthlyIncome = "monthly_income"
         case primaryGoal = "primary_goal"
         case createdAt = "created_at"
@@ -39,18 +45,63 @@ struct User: Codable, Identifiable {
     }
 }
 
+struct AdminUser: Codable, Identifiable {
+    let id: String
+    let name: String
+    let email: String?
+    let mobileNumber: String?
+    let role: String?
+    let status: String?
+    let avatar: String?
+    let monthlyIncome: Double?
+    let currency: String?
+    let createdAt: Date?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, email, role, status, avatar, currency
+        case mobileNumber = "mobile_number"
+        case monthlyIncome = "monthly_income"
+        case createdAt = "created_at"
+    }
+}
+
+struct UpcomingBill: Codable, Identifiable {
+    let id: String
+    let merchant: String
+    let amount: Double
+    let nextDueDate: Date
+    let frequency: String
+    let type: String
+    let userName: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, merchant, amount, frequency, type
+        case nextDueDate = "next_due_date"
+        case userName = "user_name"
+    }
+}
+
 struct DashboardStats: Codable {
     let userName: String
+    let avatar: String?
     let currency: String
     let monthlyIncome: Double
     let totalIncome: Double
     let totalExpenses: Double
-    let totalSpent: Double
     let balance: Double
     let savings: Double
-    let budget: Double
-    let transactionsCount: Int
-    let recentTransactions: [Transaction]?
+    let budget: Double?
+    let totalBudget: Double?
+    let remainingBudget: Double?
+    let budgetUsedPercentage: Double?
+    let incomeGrowth: Double?
+    let expenseGrowth: Double?
+    let savingsGrowth: Double?
+    let transactions: [Transaction]?
+    let upcomingBills: [UpcomingBill]?
+    let isAdmin: Bool?
+    let isConsolidated: Bool?
+    let totalUsers: Int?
 }
 
 struct Account: Codable, Identifiable {
@@ -104,14 +155,47 @@ struct SavingsGoal: Codable, Identifiable {
 
 struct RecurringTransaction: Codable, Identifiable {
     let id: String
-    let userId: String?
-    let amount: Double
+    let userId: String
     let type: String
+    let amount: Double
+    let categoryId: String?
+    let accountId: String
     let frequency: String
-    let nextDate: Date
-    let merchant: String?
-    let createdAt: Date?
-    let updatedAt: Date?
+    let nextDueDate: Date
+    let createdAt: Date
+    
+    // New enriched fields
+    var merchant: String?
+    var startDate: Date?
+    var endDate: Date?
+    var notes: String?
+    var reminderDays: Int?
+    var autoCreate: Bool?
+    var status: String?
+    var variableAmount: Bool?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case type
+        case amount
+        case categoryId = "category_id"
+        case accountId = "account_id"
+        case frequency
+        case nextDueDate = "next_due_date"
+        case createdAt = "created_at"
+        
+        case merchant
+        case startDate = "start_date"
+        case endDate = "end_date"
+        case notes
+        case reminderDays = "reminder_days"
+        case autoCreate = "auto_create"
+        case status
+        case variableAmount = "variable_amount"
+    }
+    
+    var nextDate: Date { nextDueDate }
 }
 
 struct BudgetSummaryResponse: Codable {

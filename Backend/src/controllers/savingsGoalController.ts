@@ -48,7 +48,7 @@ export const updateSavingsGoal = async (req: AuthRequest, res: Response) => {
 export const deleteSavingsGoal = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const deleted = await db("savings_goals").where({ id, user_id: req.user?.id }).del();
+    const deleted = await db("savings_goals").where({ id, user_id: req.user?.id }).update({ deleted_at: db.fn.now() });
     if (!deleted) return res.status(404).json({ error: "Not found" });
     res.json({ success: true });
   } catch (error) {

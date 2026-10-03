@@ -23,6 +23,7 @@ export const getTransactions = async (req: AuthRequest, res: Response, next: Nex
     const transactions = await db("transactions")
       .leftJoin("categories", "transactions.category_id", "categories.id")
       .where(whereClause)
+      .whereNull("transactions.deleted_at")
       .select(
         "transactions.*",
         "categories.name as category_name",
@@ -121,6 +122,68 @@ export const createTransaction = async (req: AuthRequest, res: Response, next: N
       description,
       notes
     }).returning("*");
+    // ---------------- NOTIFICATIONS LOGIC ----------------
+    try {
+      if (type === "INCOME") {
+        await db("notifications").insert({
+          user_id: userId,
+          type: "income",
+          title: "Income Added",
+          message: `You have successfully added an income of ${amount}.`
+        });
+      } else if (type === "EXPENSE") {
+        await db("notifications").insert({
+          user_id: userId,
+          type: "expense",
+          title: "Expense Added",
+          message: `You have added an expense of ${amount} for ${description}.`
+        });
+
+        // Budget check
+        if (categoryId) {
+          const [year, month] = date.split("-");
+          const monthDate = `${year}-${month}-01`;
+          
+          const budget = await db("budgets")
+            .where({ user_id: userId, category_id: categoryId, month: monthDate })
+            .whereNull("deleted_at")
+            .first();
+
+          if (budget) {
+            const nextMonth = Number(month) === 12 ? 1 : Number(month) + 1;
+            const nextYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
+            const endDate = `${nextYear}-${String(nextMonth).padStart(2, "0")}-01`;
+            
+            const expenses = await db("transactions")
+              .where({ user_id: userId, type: "EXPENSE", category_id: categoryId })
+              .andWhere("date", ">=", monthDate)
+              .andWhere("date", "<", endDate)
+              .whereNull("deleted_at");
+
+            const totalSpent = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+            const budgetAmount = Number(budget.amount);
+
+            if (totalSpent >= budgetAmount * 0.9) {
+              const exceedMsg = totalSpent > budgetAmount 
+                ? `You have exceeded your budget! You've spent ${totalSpent} out of ${budgetAmount}.`
+                : `You are approaching your budget limit! You've spent ${totalSpent} out of ${budgetAmount}.`;
+              
+              await db("notifications").insert({
+                user_id: userId,
+                type: "budget_alert",
+                title: "Budget Alert",
+                message: exceedMsg
+              });
+            }
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error("Error creating notification:", notifErr);
+      // We don't fail the transaction if notification fails
+    }
+    // ------------------------------------------------------
+
 
     res.status(201).json({
       id: transaction.id,
@@ -136,6 +199,23 @@ export const createTransaction = async (req: AuthRequest, res: Response, next: N
       createdAt: transaction.created_at,
       updatedAt: transaction.updated_at
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteTransaction = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const scope = getQueryScope(req);
+    const { id } = req.params;
+    const whereClause = scope.user_id ? { id, user_id: scope.user_id } : { id };
+    
+    const deleted = await db("transactions").where(whereClause)
+      .whereNull("transactions.deleted_at").update({ deleted_at: db.fn.now() });
+    if (!deleted) {
+      return res.status(404).json({ error: "Transaction not found" });
+    }
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

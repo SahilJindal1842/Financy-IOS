@@ -96,4 +96,29 @@ final class TransactionsViewModel: ObservableObject {
         }
         return nil
     }
+    func deleteTransaction(id: String) async {
+        do {
+            struct EmptyResponse: Decodable {}
+            let _: EmptyResponse = try await APIManager.shared.request(endpoint: "/transactions/\(id)", method: "DELETE")
+            await fetchTransactions()
+        } catch {
+            print("Failed to delete transaction: \(error)")
+            self.errorMessage = error.localizedDescription
+        }
+    }
+
+    func createCategory(name: String, type: String, icon: String, color: String) async {
+        do {
+            let body: [String: Any] = [
+                "name": name,
+                "type": type,
+                "icon": icon,
+                "color": color
+            ]
+            let data = try JSONSerialization.data(withJSONObject: body)
+            let _ : Category = try await APIManager.shared.request(endpoint: "/categories", method: "POST", body: data)
+        } catch {
+            print("Failed to create category: \(error)")
+        }
+    }
 }

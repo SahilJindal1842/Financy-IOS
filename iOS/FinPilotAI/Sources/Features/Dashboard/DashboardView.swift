@@ -4,26 +4,44 @@ struct DashboardView: View {
     @Binding var selectedTab: Int
     @StateObject private var viewModel = DashboardViewModel()
     @State private var showingAddExpense = false
+    @State private var currentMonth: String = "September 2026"
     
     var body: some View {
         NavigationView {
             ZStack {
                 FinPilotColors.background.ignoresSafeArea()
                 
-                if true {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            headerView
-                            monthlyBudgetCard
-                            balanceAndSavingsCards
-                            quickActions
-                            todaysExpenses
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 24) {
+                        headerView
+                        totalBalanceCard
+                        statsGrid
+                        upcomingBillsSection
                     }
-                    .refreshable {
-                        await viewModel.loadDashboardData()
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .padding(.bottom, 100) // For tab bar and FAB
+                }
+                .refreshable {
+                    await viewModel.loadDashboardData()
+                }
+                
+                // Floating Action Button
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: { showingAddExpense = true }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 60, height: 60)
+                                .background(FinPilotColors.primary)
+                                .clipShape(Circle())
+                                .shadow(color: FinPilotColors.primary.opacity(0.4), radius: 8, x: 0, y: 4)
+                        }
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20)
                     }
                 }
             }
@@ -31,6 +49,10 @@ struct DashboardView: View {
             .navigationBarHidden(true)
             .task {
                 await viewModel.loadDashboardData()
+                
+                let formatter = DateFormatter()
+                formatter.dateFormat = "MMMM yyyy"
+                currentMonth = formatter.string(from: Date())
             }
             .onReceive(NotificationCenter.default.publisher(for: .transactionUpdated)) { _ in
                 Task {
@@ -40,289 +62,310 @@ struct DashboardView: View {
             .onReceive(NotificationCenter.default.publisher(for: .userLoggedOut)) { _ in
                 viewModel.reset()
             }
+            .sheet(isPresented: $showingAddExpense) {
+                AddTransactionView()
+            }
         }
     }
     
     private var headerView: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(viewModel.userName.isEmpty ? "Good Morning" : "Good Morning, \(viewModel.userName)")
-                    .font(FinPilotTypography.title2)
-                    .foregroundColor(FinPilotColors.textPrimary)
-                Text("Here's your financial overview")
-                    .font(FinPilotTypography.subheadline)
-                    .foregroundColor(FinPilotColors.textSecondary)
-            }
-            Spacer()
-            NavigationLink(destination: NotificationsView()) {
-                Image(systemName: "bell.badge.fill")
-                    .foregroundColor(FinPilotColors.primary)
-                    .padding(10)
-                    .background(Color.white)
-                    .clipShape(Circle())
-                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-            }
-        }
-    }
-    
-    private var monthlyBudgetCard: some View {
-        let budgetTotal = viewModel.budget > 0 ? viewModel.budget : viewModel.monthlyIncome
-        let spent = viewModel.totalSpent
-        let left = max(0, budgetTotal - spent)
-        let progress = budgetTotal > 0 ? min(1.0, spent / budgetTotal) : 0.0
-        
-        return VStack(alignment: .leading, spacing: 16) {
+        VStack(spacing: 16) {
             HStack {
-                Text("Monthly Budget")
-                    .font(FinPilotTypography.headline)
-                    .foregroundColor(.white.opacity(0.9))
-                Spacer()
-                Image(systemName: "ellipsis")
-                    .foregroundColor(.white)
-            }
-            
-            Text("₹ \(budgetTotal.formatted(.number.precision(.fractionLength(0))))")
-                .font(.system(size: 36, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-            
-            VStack(spacing: 8) {
-                // Progress bar
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.3))
-                            .frame(height: 8)
-                        
-                        Capsule()
-                            .fill(Color.white)
-                            .frame(width: geometry.size.width * CGFloat(progress), height: 8)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Good Morning,")
+                        .font(FinPilotTypography.body)
+                        .foregroundColor(FinPilotColors.textSecondary)
+                    HStack {
+                        Text("\(viewModel.userName) 👋")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(FinPilotColors.textPrimary)
                     }
                 }
-                .frame(height: 8)
-                
-                HStack {
-                    Text("₹ \(spent.formatted(.number.precision(.fractionLength(0)))) spent")
-                    Spacer()
-                    Text("₹ \(left.formatted(.number.precision(.fractionLength(0)))) left")
-                }
-                .font(FinPilotTypography.caption)
-                .foregroundColor(.white.opacity(0.9))
-            }
-        }
-        .padding(24)
-        .background(FinPilotColors.budgetCardGradient)
-        .cornerRadius(24)
-        .shadow(color: FinPilotColors.primary.opacity(0.3), radius: 10, x: 0, y: 5)
-    }
-    
-    private var balanceAndSavingsCards: some View {
-        HStack(spacing: 16) {
-            // Balance Card
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "wallet.pass.fill")
-                        .foregroundColor(FinPilotColors.primary)
-                        .font(.subheadline)
-                    Text("Balance")
-                        .font(FinPilotTypography.caption)
-                        .foregroundColor(FinPilotColors.textSecondary)
-                }
-                Text("₹ \(viewModel.totalBalance.formatted(.number.precision(.fractionLength(0))))")
-                    .font(FinPilotTypography.headline)
-                    .foregroundColor(FinPilotColors.textPrimary)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(FinPilotColors.surface)
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
-
-            // Savings Card
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .foregroundColor(FinPilotColors.success)
-                        .font(.subheadline)
-                    Text("Savings")
-                        .font(FinPilotTypography.caption)
-                        .foregroundColor(FinPilotColors.textSecondary)
-                }
-                Text("₹ \(viewModel.savings.formatted(.number.precision(.fractionLength(0))))")
-                    .font(FinPilotTypography.headline)
-                    .foregroundColor(FinPilotColors.textPrimary)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(FinPilotColors.surface)
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
-        }
-    }
-    
-    private var quickActions: some View {
-        HStack(spacing: 20) {
-            Button(action: { showingAddExpense = true }) {
-                QuickActionIcon(icon: "plus", title: "Add Expense", color: .blue)
-            }
-            Button(action: { selectedTab = 3 }) {
-                QuickActionIcon(icon: "chart.pie.fill", title: "View Insights", color: .purple)
-            }
-            Button(action: { selectedTab = 2 }) {
-                QuickActionIcon(icon: "target", title: "Set Budget", color: .orange)
-            }
-            Button(action: { selectedTab = 4 }) {
-                QuickActionIcon(icon: "star.fill", title: "Goals", color: .pink)
-            }
-        }
-        .padding(.vertical, 6)
-        .sheet(isPresented: $showingAddExpense) {
-            AddTransactionView()
-        }
-    }
-    
-    private var todaysExpenses: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Recent Expenses")
-                    .font(FinPilotTypography.title3)
-                    .foregroundColor(FinPilotColors.textPrimary)
                 Spacer()
-                Text("See All")
-                    .font(FinPilotTypography.subheadline)
-                    .foregroundColor(FinPilotColors.primary)
+                
+                HStack(spacing: 16) {
+                    NavigationLink(destination: NotificationsView()) {
+                        Image(systemName: "bell")
+                            .font(.system(size: 20))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                    }
+                    
+                    NavigationLink(destination: EditProfileView()) {
+                        Group {
+                            if let avatar = viewModel.avatar, !avatar.isEmpty, avatar.starts(with: "/") {
+                                let fullUrlStr = NetworkConfig.baseURLString.replacingOccurrences(of: "/api", with: "") + avatar
+                                AsyncImage(url: URL(string: fullUrlStr)) { image in
+                                    image.resizable().scaledToFill()
+                                } placeholder: {
+                                    Circle().fill(Color.gray.opacity(0.3))
+                                }
+                                .frame(width: 40, height: 40)
+                                .clipShape(Circle())
+                            } else {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                    }
+                }
             }
             
-            VStack(spacing: 12) {
-                if false {
-                    // removed inline loading since we use global overlay
+            HStack {
+                Button(action: { /* Pick month */ }) {
+                    HStack(spacing: 4) {
+                        Text(currentMonth)
+                            .font(FinPilotTypography.subheadline)
+                            .foregroundColor(FinPilotColors.textPrimary)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                    }
+                }
+                Spacer()
+            }
+        }
+    }
+    
+    private var totalBalanceCard: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 24)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [FinPilotColors.primaryLight, FinPilotColors.primaryDark]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: FinPilotColors.primary.opacity(0.3), radius: 10, x: 0, y: 5)
+            
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Total Balance")
+                        .font(FinPilotTypography.body)
+                        .foregroundColor(.white.opacity(0.9))
+                    
+                    Text("\(viewModel.currency) \(Int(viewModel.remainingBudget))")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    Text("of \(viewModel.currency) \(Int(viewModel.budget)) budget")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.7))
                 }
                 
-                if viewModel.transactions.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "tray")
-                            .font(.system(size: 36))
-                            .foregroundColor(FinPilotColors.textSecondary.opacity(0.6))
-                        Text("No expenses yet")
-                            .font(FinPilotTypography.headline)
-                            .foregroundColor(FinPilotColors.textSecondary)
-                        Text("Tap 'Add Expense' above to log your first transaction.")
-                            .font(FinPilotTypography.caption)
-                            .foregroundColor(FinPilotColors.textSecondary)
+                Spacer()
+                
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.2), lineWidth: 8)
+                        .frame(width: 70, height: 70)
+                    
+                    Circle()
+                        .trim(from: 0, to: CGFloat(viewModel.budgetUsedPercentage) / 100)
+                        .stroke(Color.white, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .frame(width: 70, height: 70)
+                        .rotationEffect(.degrees(-90))
+                    
+                    VStack(spacing: 2) {
+                        Text("\(Int(viewModel.budgetUsedPercentage))%")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("budget used")
+                            .font(.system(size: 8))
+                            .foregroundColor(.white.opacity(0.8))
                             .multilineTextAlignment(.center)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 32)
-                    .background(FinPilotColors.surface)
-                    .cornerRadius(16)
-                    .shadow(color: .black.opacity(0.02), radius: 4, x: 0, y: 2)
-                } else {
-                    ForEach(viewModel.transactions.prefix(5)) { tx in
-                        DashboardTransactionRow(
-                            icon: iconForCategory(tx.categoryId ?? ""),
-                            iconColor: colorForCategory(tx.categoryId ?? ""),
-                            title: tx.merchant ?? (tx.categoryId ?? "Expense"),
-                            subtitle: "\(tx.categoryId ?? "General") • \(dateFormatter.string(from: tx.date))",
-                            amount: "\(tx.amount < 0 ? "-" : "+")₹ \(abs(tx.amount).formatted(.number.precision(.fractionLength(0))))"
-                        )
+                }
+            }
+            .padding(24)
+        }
+        .frame(height: 140)
+    }
+    
+    private var statsGrid: some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
+                StatCard(
+                    icon: "arrow.down.left",
+                    iconColor: .green,
+                    iconBg: Color.green.opacity(0.15),
+                    title: "Income",
+                    amount: "\(viewModel.currency) \(Int(viewModel.totalIncome))",
+                    growth: "↑ \(Int(viewModel.incomeGrowth))%",
+                    growthColor: .green
+                )
+                
+                StatCard(
+                    icon: "arrow.up.right",
+                    iconColor: .red,
+                    iconBg: Color.red.opacity(0.15),
+                    title: "Expenses",
+                    amount: "\(viewModel.currency) \(Int(viewModel.totalExpenses))",
+                    growth: "↑ \(Int(viewModel.expenseGrowth))%",
+                    growthColor: .red
+                )
+            }
+            
+            HStack(spacing: 16) {
+                StatCard(
+                    icon: "target",
+                    iconColor: .blue,
+                    iconBg: Color.blue.opacity(0.15),
+                    title: "Savings",
+                    amount: "\(viewModel.currency) \(Int(viewModel.savings))",
+                    growth: "↑ \(Int(viewModel.savingsGrowth))%",
+                    growthColor: .blue
+                )
+                
+                StatCard(
+                    icon: "chart.pie.fill",
+                    iconColor: .purple,
+                    iconBg: Color.purple.opacity(0.15),
+                    title: "Remaining Budget",
+                    amount: "\(viewModel.currency) \(Int(viewModel.remainingBudget))",
+                    growth: nil,
+                    growthColor: .clear
+                )
+            }
+        }
+    }
+    
+    private var upcomingBillsSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("Upcoming Recurring Payments")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(FinPilotColors.textPrimary)
+                
+                Spacer()
+                
+                Button("View All") {
+                    selectedTab = 2 // Navigate to Recurring tab
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(FinPilotColors.primary)
+            }
+            
+            if viewModel.upcomingBills.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 36))
+                        .foregroundColor(.green)
+                    Text("All caught up!")
+                        .font(FinPilotTypography.headline)
+                        .foregroundColor(FinPilotColors.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 32)
+                .background(FinPilotColors.surface)
+                .cornerRadius(16)
+                .shadow(color: .black.opacity(0.02), radius: 4, x: 0, y: 2)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(viewModel.upcomingBills) { bill in
+                        UpcomingBillRow(bill: bill, currency: viewModel.currency)
                     }
                 }
             }
         }
     }
-    
-    private let dateFormatter: DateFormatter = {
-        let df = DateFormatter()
-        df.dateStyle = .short
-        df.timeStyle = .short
-        return df
-    }()
-    
-    private func iconForCategory(_ cat: String) -> String {
-        switch cat {
-        case "Food": return "fork.knife"
-        case "Transport": return "car.fill"
-        case "Shopping": return "bag.fill"
-        case "Bills": return "doc.text.fill"
-        case "Health": return "heart.fill"
-        default: return "creditcard.fill"
-        }
-    }
-    
-    private func colorForCategory(_ cat: String) -> Color {
-        switch cat {
-        case "Food": return .orange
-        case "Transport": return .blue
-        case "Shopping": return .pink
-        case "Bills": return .purple
-        case "Health": return .red
-        default: return .gray
-        }
-    }
 }
 
-struct QuickActionIcon: View {
-    let icon: String
-    let title: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-                .frame(width: 56, height: 56)
-                .background(color.opacity(0.15))
-                .clipShape(Circle())
-            
-            Text(title)
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundColor(FinPilotColors.textSecondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-struct DashboardTransactionRow: View {
+struct StatCard: View {
     let icon: String
     let iconColor: Color
+    let iconBg: Color
     let title: String
-    let subtitle: String
     let amount: String
+    let growth: String?
+    let growthColor: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(iconColor)
+                    .frame(width: 32, height: 32)
+                    .background(iconBg)
+                    .clipShape(Circle())
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(FinPilotColors.textSecondary)
+                }
+                Spacer()
+            }
+            
+            Text(amount)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundColor(FinPilotColors.textPrimary)
+            
+            if let g = growth {
+                Text(g)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(growthColor)
+            }
+        }
+        .padding(16)
+        .background(FinPilotColors.surface)
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 4)
+    }
+}
+
+struct UpcomingBillRow: View {
+    let bill: UpcomingBill
+    let currency: String
     
     var body: some View {
         HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(iconColor)
+            Image(systemName: iconFor(bill.merchant))
+                .font(.system(size: 20))
+                .foregroundColor(colorFor(bill.merchant))
                 .frame(width: 48, height: 48)
-                .background(iconColor.opacity(0.15))
+                .background(colorFor(bill.merchant).opacity(0.15))
                 .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(FinPilotTypography.headline)
+                Text(bill.merchant)
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(FinPilotColors.textPrimary)
-                Text(subtitle)
-                    .font(FinPilotTypography.caption)
+                
+                Text("\(currency) \(Int(bill.amount)) • \(formatDate(bill.nextDueDate))")
+                    .font(.system(size: 13))
                     .foregroundColor(FinPilotColors.textSecondary)
             }
             
             Spacer()
-            
-            Text(amount)
-                .font(FinPilotTypography.headline)
-                .foregroundColor(FinPilotColors.textPrimary)
         }
         .padding(16)
         .background(FinPilotColors.surface)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.03), radius: 5, x: 0, y: 2)
     }
-}
-
-struct DashboardView_Previews: PreviewProvider {
-    static var previews: some View {
-        DashboardView(selectedTab: .constant(0))
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return formatter.string(from: date)
+    }
+    
+    private func iconFor(_ name: String) -> String {
+        let n = name.lowercased()
+        if n.contains("rent") || n.contains("home") { return "house.fill" }
+        if n.contains("netflix") || n.contains("tv") { return "play.tv.fill" }
+        if n.contains("internet") || n.contains("wifi") { return "wifi" }
+        return "doc.text.fill"
+    }
+    
+    private func colorFor(_ name: String) -> Color {
+        let n = name.lowercased()
+        if n.contains("rent") || n.contains("home") { return .red }
+        if n.contains("netflix") || n.contains("tv") { return .red }
+        if n.contains("internet") || n.contains("wifi") { return .blue }
+        return .purple
     }
 }

@@ -1,35 +1,99 @@
-# Operating System & IDE
+# ==============================================================================
+# FinPilotAI / Financy Multi-Stack .gitignore
+# Stack: iOS (SwiftUI/Xcode) + Backend (Node/Express/Knex) + Admin (Next.js/Tailwind)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. macOS & Operating System Files
+# ------------------------------------------------------------------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# ------------------------------------------------------------------------------
+# 2. IDE & Editor Artifacts
+# ------------------------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
 *.swp
 *.swo
-.vscode/
-.idea/
 
-# Node dependencies & logs
+# ------------------------------------------------------------------------------
+# 3. iOS / Xcode / Swift PM
+# ------------------------------------------------------------------------------
+build/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+
+## User-specific Xcode state
+**/*.xcuserstate
+**/xcuserdata/
+**/*.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
+
+## Swift Package Manager
+.build/
+.swiftpm/xcode/package.resolved
+
+# ------------------------------------------------------------------------------
+# 4. Node.js & Dependencies (Backend & AdminDashboard)
+# ------------------------------------------------------------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
+package-lock.json.backup
 
-# Build & compilation outputs
+# ------------------------------------------------------------------------------
+# 5. Build Outputs & Compilation Targets
+# ------------------------------------------------------------------------------
 dist/
-build/
-.next/
 out/
+.next/
+.turbo/
+.cache/
 
-# Environment files with sensitive credentials
+# ------------------------------------------------------------------------------
+# 6. Environment & Secret Credentials (Never commit live credentials)
+# ------------------------------------------------------------------------------
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+Backend/.env
+AdminDashboard/.env.local
+AdminDashboard/.env
+
+# Always allow template and example files
 !.env.example
+!Backend/.env.example
+!AdminDashboard/.env.example
 
-# Xcode local user states & derived data
-*.xcuserstate
-xcuserdata/
-DerivedData/
+# ------------------------------------------------------------------------------
+# 7. Database Dumps & Local Logs
+# ------------------------------------------------------------------------------
+*.sql
+*.log
+Backend/*.sql
 
-# Temporary test screenshots (excluding assets in app bundles)
+# ------------------------------------------------------------------------------
+# 8. Temporary Development Screenshots
+# ------------------------------------------------------------------------------
 /*.png

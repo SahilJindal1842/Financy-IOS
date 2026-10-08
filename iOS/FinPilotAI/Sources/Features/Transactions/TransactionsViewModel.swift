@@ -8,20 +8,41 @@ final class TransactionsViewModel: ObservableObject {
     @Published var categories: [Category] = []
     @Published var errorMessage: String? = nil
     
+    @Published var adminUsers: [AdminUser] = []
+    @Published var selectedAdminUserId: String = "all"
+    @Published var selectedAdminUserName: String = "All Users"
+    @Published var settledMonths: Set<String> = []
+    
     init() {
         NotificationCenter.default.addObserver(forName: .userLoggedOut, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.transactions = []
                 self?.categories = []
+                self?.settledMonths = []
             }
         }
     }
     
-    func fetchTransactions() async {
+    func fetchTransactions(targetUserId: String? = nil, isAdmin: Bool = false) async {
         isLoading = true
         errorMessage = nil
+        
+        if isAdmin && adminUsers.isEmpty {
+            do {
+                let users: [AdminUser] = try await APIManager.shared.request(endpoint: "/admin/users")
+                self.adminUsers = users
+            } catch {
+                print("Failed to fetch admin users in transactions: \(error)")
+            }
+        }
+        
         do {
-            transactions = try await APIManager.shared.request(endpoint: "/transactions")
+            let uid = targetUserId ?? selectedAdminUserId
+            var ep = "/transactions?include_settled=true"
+            if isAdmin && uid != "all" && !uid.isEmpty {
+                ep += "&user_id=\(uid)"
+            }
+            transactions = try await APIManager.shared.request(endpoint: ep)
         } catch {
             print("Failed to load transactions: \(error)")
             errorMessage = error.localizedDescription
@@ -45,6 +66,15 @@ final class TransactionsViewModel: ObservableObject {
             categories = flatCategories
         } catch {
             print("Failed to load categories: \(error)")
+        }
+    }
+
+    func fetchSettledMonths() async {
+        do {
+            let res: SavingsHistoryResponse = try await APIManager.shared.request(endpoint: "/settlement/history")
+            self.settledMonths = Set(res.history.map { $0.month })
+        } catch {
+            print("Failed to fetch settled months: \(error)")
         }
     }
     

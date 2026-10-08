@@ -6,13 +6,21 @@ final class BudgetsViewModel: ObservableObject {
     @Published var summary: BudgetSummaryResponse?
     @Published var categories: [Category] = []
     @Published var errorMessage: String? = nil
+    @Published var selectedMonth: Date = Date()
     
-    func fetchBudgets() async {
+    var selectedMonthString: String {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM"
+        return df.string(from: selectedMonth)
+    }
+    
+    func fetchBudgets(monthStr: String? = nil) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         
-        async let summaryTask: BudgetSummaryResponse = try APIManager.shared.request(endpoint: "/budgets/summary")
+        let targetMonth = monthStr ?? selectedMonthString
+        async let summaryTask: BudgetSummaryResponse = try APIManager.shared.request(endpoint: "/budgets/summary?month=\(targetMonth)")
         async let categoriesTask: [Category] = try APIManager.shared.request(endpoint: "/categories")
         
         do {
@@ -35,12 +43,21 @@ final class BudgetsViewModel: ObservableObject {
         }
     }
     
-    func setBudget(categoryId: String, amount: Double) async {
+    func setBudget(categoryId: String, amount: Double, monthStr: String? = nil, applyToYear: Bool = false, applyToUpcomingMonths: Bool = false, year: Int? = nil) async {
         isLoading = true
-        let params: [String: Any] = [
+        var params: [String: Any] = [
             "category_id": categoryId,
-            "amount": amount
+            "amount": amount,
+            "month": monthStr ?? selectedMonthString
         ]
+        if applyToUpcomingMonths {
+            params["apply_to_upcoming_months"] = true
+        } else if applyToYear {
+            params["apply_to_year"] = true
+        }
+        if let y = year {
+            params["year"] = y
+        }
         do {
             let data = try JSONSerialization.data(withJSONObject: params)
             struct GenericResponse: Decodable {}
@@ -53,11 +70,20 @@ final class BudgetsViewModel: ObservableObject {
         }
     }
     
-    func setBulkBudgets(budgets: [[String: Any]]) async {
+    func setBulkBudgets(budgets: [[String: Any]], monthStr: String? = nil, applyToYear: Bool = false, applyToUpcomingMonths: Bool = false, year: Int? = nil) async {
         isLoading = true
-        let params: [String: Any] = [
-            "budgets": budgets
+        var params: [String: Any] = [
+            "budgets": budgets,
+            "month": monthStr ?? selectedMonthString
         ]
+        if applyToUpcomingMonths {
+            params["apply_to_upcoming_months"] = true
+        } else if applyToYear {
+            params["apply_to_year"] = true
+        }
+        if let y = year {
+            params["year"] = y
+        }
         do {
             let data = try JSONSerialization.data(withJSONObject: params)
             struct GenericResponse: Decodable {}

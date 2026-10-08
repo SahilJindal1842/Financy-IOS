@@ -1,7 +1,16 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selectedTab = 0
+    @AppStorage("selectedMainTab") private var selectedTab = 0
+    @AppStorage("appTheme") private var appTheme: String = "system"
+    
+    private var currentColorScheme: ColorScheme? {
+        switch appTheme {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -36,7 +45,43 @@ struct MainTabView: View {
                 .tag(4)
         }
         .tint(FinPilotColors.primary)
+        .preferredColorScheme(currentColorScheme)
         .onAppear {
+            let hasExplicitFlag = CommandLine.arguments.contains("--tab") ||
+                                  CommandLine.arguments.contains("--add-tx") ||
+                                  CommandLine.arguments.contains("--reports") ||
+                                  CommandLine.arguments.contains("--edit-profile") ||
+                                  CommandLine.arguments.contains("--savings")
+            if !hasExplicitFlag {
+                selectedTab = 0
+            }
+            if let idx = CommandLine.arguments.firstIndex(of: "--tab"), idx + 1 < CommandLine.arguments.count, let val = Int(CommandLine.arguments[idx + 1]) {
+                selectedTab = val
+            }
+            if CommandLine.arguments.contains("--add-tx") {
+                selectedTab = 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(name: Notification.Name("FinPilotShowAddTx"), object: nil)
+                }
+            }
+            if CommandLine.arguments.contains("--settle-sheet") {
+                selectedTab = 0
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(name: Notification.Name("FinPilotShowMonthSettlement"), object: nil)
+                }
+            }
+            if CommandLine.arguments.contains("--reports") {
+                selectedTab = 4
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(name: Notification.Name("FinPilotShowReports"), object: nil)
+                }
+            }
+            if CommandLine.arguments.contains("--edit-profile") {
+                selectedTab = 4
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(name: Notification.Name("FinPilotShowEditProfile"), object: nil)
+                }
+            }
             let appearance = UITabBarAppearance()
             appearance.configureWithOpaqueBackground()
             appearance.backgroundColor = UIColor(FinPilotColors.surface)
@@ -51,6 +96,13 @@ struct MainTabView: View {
             
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .navigateToTab)) { notif in
+            if let index = notif.object as? Int {
+                withAnimation {
+                    selectedTab = index
+                }
+            }
         }
     }
 }

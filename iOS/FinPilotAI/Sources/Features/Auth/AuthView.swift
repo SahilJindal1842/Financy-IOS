@@ -72,7 +72,6 @@ struct AuthView: View {
                 .padding(.bottom, 40)
             }
         }
-        .preferredColorScheme(.light)
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
@@ -146,9 +145,9 @@ struct ModernLoginView: View {
     let onSwitchToSignUp: () -> Void
     
     @State private var loginMethod: Int = 0 // 0: Email, 1: Mobile
-    @State private var email = ""
+    @State private var email = "demo@financy.app"
     @State private var mobile = ""
-    @State private var password = ""
+    @State private var password = "Password@123"
     @State private var showPassword = false
     @State private var rememberMe = true
     @State private var showingSocialDialog = false
@@ -228,8 +227,7 @@ struct ModernLoginView: View {
             
             // Social Auth Buttons (Google, Facebook, Apple)
             SocialLoginRow(onSelectProvider: { provider in
-                socialProvider = provider
-                showingSocialDialog = true
+                viewModel.startSocialAuth(provider: provider)
             })
             
             // Bottom Switch to Sign Up
@@ -244,23 +242,71 @@ struct ModernLoginView: View {
                         .foregroundColor(FinPilotColors.primary)
                 }
             }
-            .padding(.top, 8)
+            .padding(.top, 6)
+            
+            // Demo Quick Login
+            Button(action: {
+                email = "demo@financy.app"
+                password = "Password@123"
+                loginMethod = 0
+                Task {
+                    await viewModel.login(email: "demo@financy.app", password: "Password@123")
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 13))
+                    Text("Demo Quick Login (₹20k Income / ₹10k Budget)")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(FinPilotColors.primary)
+                .cornerRadius(12)
+            }
+            .padding(.top, 4)
+            
+            // Admin Quick Login
+            Button(action: {
+                email = "admin@financy.app"
+                password = "Admin@123"
+                loginMethod = 0
+                Task {
+                    await viewModel.login(email: "admin@financy.app", password: "Admin@123")
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "shield.lefthalf.filled")
+                        .font(.system(size: 13))
+                    Text("Admin Quick Login (admin@financy.app)")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                }
+                .foregroundColor(FinPilotColors.primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(FinPilotColors.primary.opacity(0.1))
+                .cornerRadius(12)
+            }
+            .padding(.top, 2)
         }
-        .actionSheet(isPresented: $showingSocialDialog) {
-            ActionSheet(
-                title: Text("Sign in with \(socialProvider)"),
-                message: Text("Authorize Financy to sign in using your \(socialProvider) account."),
-                buttons: [
-                    .default(Text("Continue with \(socialProvider)")) {
-                        Task {
-                            let dummyEmail = "\(socialProvider.lowercased())_user@financy.app"
-                            let dummyName = "\(socialProvider) User"
-                            await viewModel.socialLogin(provider: socialProvider.lowercased(), email: dummyEmail, name: dummyName)
-                        }
-                    },
-                    .cancel()
-                ]
+        .sheet(isPresented: $showingSocialDialog) {
+            SocialAuthModalView(
+                provider: socialProvider,
+                isSignUp: false,
+                onAuthenticate: { email, name in
+                    showingSocialDialog = false
+                    Task {
+                        await viewModel.socialLogin(provider: socialProvider.lowercased(), email: email, name: name)
+                    }
+                }
             )
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("FinPilotShowSocialSheet"))) { notif in
+            if let p = notif.object as? String {
+                socialProvider = p
+                showingSocialDialog = true
+            }
         }
         .alert(isPresented: $showForgotPassword) {
             Alert(
@@ -410,8 +456,7 @@ struct ModernSignupView: View {
             
             // Social Auth Buttons
             SocialLoginRow(onSelectProvider: { provider in
-                socialProvider = provider
-                showingSocialDialog = true
+                viewModel.startSocialAuth(provider: provider)
             })
             
             // Bottom Switch to Login
@@ -428,21 +473,23 @@ struct ModernSignupView: View {
             }
             .padding(.top, 8)
         }
-        .actionSheet(isPresented: $showingSocialDialog) {
-            ActionSheet(
-                title: Text("Sign up with \(socialProvider)"),
-                message: Text("Create your Financy account instantly using your \(socialProvider) profile."),
-                buttons: [
-                    .default(Text("Continue with \(socialProvider)")) {
-                        Task {
-                            let dummyEmail = "\(socialProvider.lowercased())_user@financy.app"
-                            let dummyName = fullName.isEmpty ? "\(socialProvider) User" : fullName
-                            await viewModel.socialLogin(provider: socialProvider.lowercased(), email: dummyEmail, name: dummyName)
-                        }
-                    },
-                    .cancel()
-                ]
+        .sheet(isPresented: $showingSocialDialog) {
+            SocialAuthModalView(
+                provider: socialProvider,
+                isSignUp: true,
+                onAuthenticate: { email, name in
+                    showingSocialDialog = false
+                    Task {
+                        await viewModel.socialLogin(provider: socialProvider.lowercased(), email: email, name: name)
+                    }
+                }
             )
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("FinPilotShowSocialSheet"))) { notif in
+            if let p = notif.object as? String {
+                socialProvider = p
+                showingSocialDialog = true
+            }
         }
     }
     
@@ -536,26 +583,190 @@ struct SocialButton: View {
 
 struct GoogleLogoView: View {
     var body: some View {
-        ZStack {
-            Text("G")
-                .font(.system(size: 17, weight: .black, design: .rounded))
-                .foregroundColor(Color(hex: "#4285F4"))
-        }
-        .frame(width: 20, height: 20)
+        Image("GoogleLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 20, height: 20)
     }
 }
 
 struct FacebookLogoView: View {
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color(hex: "#1877F2"))
-                .frame(width: 20, height: 20)
-            Text("f")
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .offset(y: -1)
+        Image("FacebookLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 20, height: 20)
+    }
+}
+
+// MARK: - Social Authentication Modal
+struct SocialAuthModalView: View {
+    @Environment(\.presentationMode) var presentationMode
+    let provider: String
+    let isSignUp: Bool
+    let onAuthenticate: (String, String) -> Void
+    
+    @State private var email: String = ""
+    @State private var fullName: String = ""
+    @State private var validationError: String? = nil
+    @State private var isAuthenticating: Bool = false
+    
+    var effectiveProvider: String {
+        let p = provider.trimmingCharacters(in: .whitespacesAndNewlines)
+        return p.isEmpty ? "Google" : p
+    }
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Header Brand Card
+                    VStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(providerColor.opacity(0.12))
+                                .frame(width: 72, height: 72)
+                            
+                            if effectiveProvider.lowercased() == "google" {
+                                GoogleLogoView()
+                                    .scaleEffect(1.6)
+                            } else {
+                                FacebookLogoView()
+                                    .scaleEffect(1.6)
+                            }
+                        }
+                        
+                        Text(isSignUp ? "Sign Up with \(effectiveProvider)" : "Sign In with \(effectiveProvider)")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                        
+                        Text("Connect your official \(effectiveProvider) account with Financy via Firebase Authentication.")
+                            .font(.system(size: 14))
+                            .foregroundColor(FinPilotColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                    }
+                    .padding(.top, 24)
+                    
+                    // Input Form
+                    VStack(alignment: .leading, spacing: 16) {
+                        if isSignUp {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Full Name")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(FinPilotColors.textSecondary)
+                                
+                                HStack {
+                                    Image(systemName: "person.fill")
+                                        .foregroundColor(.gray)
+                                    TextField("Enter your name", text: $fullName)
+                                }
+                                .padding(14)
+                                .background(Color(hex: "#F9FAFB"))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                                )
+                            }
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("\(effectiveProvider) Account Email")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(FinPilotColors.textSecondary)
+                            
+                            HStack {
+                                Image(systemName: "envelope.fill")
+                                    .foregroundColor(.gray)
+                                TextField("e.g. name@\(effectiveProvider.lowercased() == "google" ? "gmail.com" : "example.com")", text: $email)
+                                    .keyboardType(.emailAddress)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                            }
+                            .padding(14)
+                            .background(Color(hex: "#F9FAFB"))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                                )
+                        }
+                        
+                        if let error = validationError {
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.red)
+                                Text(error)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    
+                    // Action Button
+                    VStack(spacing: 12) {
+                        Button(action: handleAuth) {
+                            HStack(spacing: 8) {
+                                if isAuthenticating {
+                                    ProgressView()
+                                        .tint(.white)
+                                } else {
+                                    Text("Continue with \(effectiveProvider)")
+                                        .font(.system(size: 16, weight: .bold))
+                                }
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(providerColor)
+                            .cornerRadius(14)
+                            .shadow(color: providerColor.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+                        .disabled(isAuthenticating)
+                        
+                        // Firebase Security Badge
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.shield.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#059669"))
+                            Text("Secured via Firebase Identity & Auth Services")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(FinPilotColors.textSecondary)
+                        }
+                        .padding(.top, 4)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
+                }
+                .padding(.bottom, 32)
+            }
+            .navigationBarItems(trailing: Button("Cancel") {
+                presentationMode.wrappedValue.dismiss()
+            })
+            .navigationBarTitleDisplayMode(.inline)
         }
+    }
+    
+    private var providerColor: Color {
+        effectiveProvider.lowercased() == "google" ? Color(hex: "#4285F4") : Color(hex: "#1877F2")
+    }
+    
+    private func handleAuth() {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedName = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !trimmedEmail.isEmpty, trimmedEmail.contains("@"), trimmedEmail.contains(".") else {
+            validationError = "Please enter a valid \(effectiveProvider) email address."
+            return
+        }
+        
+        validationError = nil
+        isAuthenticating = true
+        
+        let finalName = trimmedName.isEmpty ? "\(effectiveProvider) User" : trimmedName
+        onAuthenticate(trimmedEmail, finalName)
     }
 }
 
@@ -726,6 +937,42 @@ struct SignupStep2View: View {
                     .multilineTextAlignment(.center)
             }
             
+            // Dev Mode OTP Banner (for instant testing or before SMTP is set)
+            if let devCode = viewModel.devOTP, !devCode.isEmpty {
+                VStack(spacing: 6) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundColor(FinPilotColors.primary)
+                        Text("Code: \(devCode)")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(FinPilotColors.primary)
+                        Spacer()
+                        Button(action: {
+                            self.otp = devCode
+                        }) {
+                            Text("Autofill")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(FinPilotColors.primary)
+                                .cornerRadius(8)
+                        }
+                    }
+                    Text("Also dispatched to your email (check inbox/spam).")
+                        .font(.system(size: 11))
+                        .foregroundColor(FinPilotColors.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(12)
+                .background(FinPilotColors.primary.opacity(0.08))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(FinPilotColors.primary.opacity(0.2), lineWidth: 1)
+                )
+            }
+            
             // OTP Input
             ModernTextField(
                 icon: "number.square.fill",
@@ -741,6 +988,21 @@ struct SignupStep2View: View {
             }
             .disabled(otp.count < 4)
             .opacity(otp.count < 4 ? 0.6 : 1.0)
+            
+            // Resend Code Action
+            HStack(spacing: 4) {
+                Text("Didn't receive the email?")
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundColor(FinPilotColors.textSecondary)
+                
+                Button("Resend Code") {
+                    Task {
+                        await viewModel.resendOTP()
+                    }
+                }
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundColor(FinPilotColors.primary)
+            }
             
             Button(action: {
                 viewModel.currentFlow = .signupStep1
@@ -819,13 +1081,106 @@ struct SignupStep3View: View {
     }
 }
 
-// MARK: - Gorgeous Splash View (Screen 1 in Prototype)
+// MARK: - Motion App Logo Component
+struct MotionAppLogoView: View {
+    @State private var isPulsing = false
+    @State private var rotateRings = false
+    @State private var waveScale: CGFloat = 1.0
+    @State private var waveOpacity: Double = 0.7
+    @State private var floatY: CGFloat = 0.0
+    
+    var body: some View {
+        ZStack {
+            // Outermost pulsing wave ring
+            Circle()
+                .stroke(Color(hex: "#34D399").opacity(waveOpacity), lineWidth: 2)
+                .frame(width: 250, height: 250)
+                .scaleEffect(waveScale)
+            
+            // Secondary glowing backdrop ring with radial gradient
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color(hex: "#10B981").opacity(0.35), Color.clear],
+                        center: .center,
+                        startRadius: 40,
+                        endRadius: 130
+                    )
+                )
+                .frame(width: 270, height: 270)
+                .scaleEffect(isPulsing ? 1.12 : 0.94)
+            
+            // Rotating dashed orbital ring
+            Circle()
+                .stroke(
+                    AngularGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.7),
+                            Color(hex: "#34D399").opacity(0.2),
+                            Color.white.opacity(0.85),
+                            Color(hex: "#10B981").opacity(0.1)
+                        ]),
+                        center: .center
+                    ),
+                    style: StrokeStyle(lineWidth: 1.5, dash: [8, 6])
+                )
+                .frame(width: 195, height: 195)
+                .rotationEffect(.degrees(rotateRings ? 360 : 0))
+            
+            // Central App Logo Card with floating motion & glow
+            ZStack {
+                // Soft glowing glass plate backdrop
+                RoundedRectangle(cornerRadius: 38)
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 146, height: 146)
+                    .blur(radius: 8)
+                
+                // Actual Brand Logo Image
+                Image("FinancyLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 132, height: 132)
+                    .clipShape(RoundedRectangle(cornerRadius: 34))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 34)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.7), Color.white.opacity(0.15)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                    .shadow(color: Color(hex: "#052e16").opacity(0.4), radius: 25, x: 0, y: 15)
+                    .shadow(color: Color(hex: "#34D399").opacity(0.5), radius: 35, x: 0, y: 0)
+            }
+            .scaleEffect(isPulsing ? 1.05 : 0.97)
+            .offset(y: floatY)
+        }
+        .frame(height: 280)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+                isPulsing = true
+            }
+            withAnimation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true)) {
+                floatY = -10
+            }
+            withAnimation(.linear(duration: 12).repeatForever(autoreverses: false)) {
+                rotateRings = true
+            }
+            withAnimation(.easeOut(duration: 2.0).repeatForever(autoreverses: false)) {
+                waveScale = 1.34
+                waveOpacity = 0.0
+            }
+        }
+    }
+}
+
+// MARK: - Gorgeous Splash View with Motion Logo in Middle
 struct SplashView: View {
     @Binding var hasSeenSplash: Bool
     @EnvironmentObject var viewModel: AuthViewModel
-    
-    @State private var isAnimating = false
-    @State private var floatOffset: CGFloat = 0
     
     var body: some View {
         ZStack {
@@ -842,7 +1197,7 @@ struct SplashView: View {
             )
             .ignoresSafeArea()
             
-            // Subtle Ambient Glow Circles
+            // Ambient Glow Orbs
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.06))
@@ -856,64 +1211,36 @@ struct SplashView: View {
             }
             
             VStack(spacing: 0) {
-                // Top Branding Badge
-                HStack(spacing: 8) {
-                    Image("FinancyLogo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 32, height: 32)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    
-                    Text("Financy")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.white.opacity(0.15))
-                .cornerRadius(20)
-                .padding(.top, 40)
-                
                 Spacer()
+                
+                // Motion App Logo in the Middle
+                MotionAppLogoView()
                 
                 // Hero Typography
-                VStack(spacing: 12) {
-                    Text("Take Control of\nYour Finances")
-                        .font(.system(size: 36, weight: .heavy, design: .rounded))
+                VStack(spacing: 8) {
+                    Text("Financy")
+                        .font(.system(size: 38, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
+                        .tracking(0.5)
                     
                     Text("Track. Budget. Save. Grow.")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(Color(hex: "#34D399"))
+                        .tracking(0.3)
+                    
+                    Text("AI-Powered Personal Finance & Wealth")
+                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.top, 2)
                 }
                 .padding(.horizontal, 24)
-                
-                Spacer()
-                
-                // 3D Wallet Illustration Visual
-                ZStack {
-                    // Outer glow ring
-                    Circle()
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                        .frame(width: 260, height: 260)
-                    
-                    Image("WalletIllustration")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 220, height: 220)
-                        .clipShape(RoundedRectangle(cornerRadius: 32))
-                        .shadow(color: Color.black.opacity(0.25), radius: 20, x: 0, y: 10)
-                        .offset(y: floatOffset)
-                }
-                .padding(.vertical, 16)
+                .padding(.top, 16)
                 
                 Spacer()
                 
                 // Bottom CTAs
                 VStack(spacing: 16) {
-                    // "Get Started" Button (White pill with green text)
+                    // "Get Started" Button
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             hasSeenSplash = true
@@ -951,14 +1278,6 @@ struct SplashView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 48)
-            }
-        }
-        .onAppear {
-            withAnimation(
-                .easeInOut(duration: 2.2)
-                .repeatForever(autoreverses: true)
-            ) {
-                floatOffset = -8
             }
         }
     }

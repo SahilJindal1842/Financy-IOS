@@ -6,11 +6,21 @@ import { getQueryScope } from "../utils/rbacUtils";
 export const getRecurringTransactions = async (req: AuthRequest, res: Response) => {
   try {
     const scope = getQueryScope(req);
-    const transactions = await db("recurring_transactions").where(scope).whereNull("deleted_at");
+    const whereClause = scope.user_id ? { "recurring_transactions.user_id": scope.user_id } : {};
+    const transactions = await db("recurring_transactions")
+      .leftJoin("users", "recurring_transactions.user_id", "users.id")
+      .where(whereClause)
+      .whereNull("recurring_transactions.deleted_at")
+      .select("recurring_transactions.*", "users.name as user_name", "users.email as user_email");
     
     const formatted = transactions.map(t => ({
       id: t.id,
+      userId: t.user_id,
       user_id: t.user_id,
+      userName: t.user_name || "User",
+      user_name: t.user_name || "User",
+      userEmail: t.user_email || "",
+      user_email: t.user_email || "",
       type: t.type,
       amount: Number(t.amount),
       category_id: t.category_id,
@@ -38,9 +48,12 @@ export const createRecurringTransaction = async (req: AuthRequest, res: Response
   try {
     const { type, amount, category_id, account_id, frequency, next_due_date, merchant, start_date, end_date, notes, reminder_days, auto_create, status, variable_amount } = req.body;
     
+    // Sanitize category_id
+    const sanitizedCategoryId = (category_id && typeof category_id === 'string' && category_id.trim().length > 0) ? category_id.trim() : null;
+
     // Enforce category ownership
-    if (category_id) {
-        const cat = await db("categories").where({ id: category_id }).first();
+    if (sanitizedCategoryId) {
+        const cat = await db("categories").where({ id: sanitizedCategoryId }).first();
         if (!cat) {
             return res.status(400).json({ error: "Invalid category_id." });
         }
@@ -62,7 +75,7 @@ export const createRecurringTransaction = async (req: AuthRequest, res: Response
                 user_id: req.user?.id,
                 name: "Main Account",
                 type: "cash",
-                currency_code: "INR"
+                currency_code: "USD"
             }).returning("*");
             firstAccount = newAcc;
         }
@@ -72,12 +85,12 @@ export const createRecurringTransaction = async (req: AuthRequest, res: Response
     const [transaction] = await db("recurring_transactions").insert({
       account_id: finalAccountId,
       user_id: req.user?.id,
-      type,
+      type: type || 'expense',
       amount,
-      category_id,
-      frequency,
+      category_id: sanitizedCategoryId,
+      frequency: (frequency || 'monthly').toLowerCase(),
       next_due_date,
-      merchant,
+      merchant: merchant || 'Subscription',
       start_date,
       end_date,
       notes,

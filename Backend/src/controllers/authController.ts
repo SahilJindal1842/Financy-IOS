@@ -280,3 +280,73 @@ export const socialLogin = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const firebaseLogin = async (req: Request, res: Response) => {
+  try {
+    const { email, name, firebaseUid, avatar, mobile_number } = req.body;
+    if (!email && !mobile_number) {
+      return res.status(400).json({ error: "Email or mobile number is required for Firebase login" });
+    }
+
+    let user = await db("users").where(function () {
+      if (email) this.where({ email });
+      if (mobile_number) this.orWhere({ mobile_number });
+    }).first();
+
+    if (!user) {
+      const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      const [newUser] = await db("users")
+        .insert({
+          email: email || null,
+          mobile_number: mobile_number || null,
+          name: name || (email ? email.split("@")[0] : "User"),
+          password_hash: hashedPassword,
+          status: "ACTIVE",
+          email_verified: !!email,
+          mobile_verified: !!mobile_number,
+          avatar: avatar || null,
+          role: "USER"
+        })
+        .returning("*");
+      user = newUser;
+    } else {
+      const updates: any = {
+        last_login_at: new Date()
+      };
+      if (user.status === "PENDING") {
+        updates.status = "ACTIVE";
+      }
+      if (email && !user.email_verified) {
+        updates.email_verified = true;
+      }
+      if (avatar && !user.avatar) {
+        updates.avatar = avatar;
+      }
+      await db("users").where({ id: user.id }).update(updates);
+      user = { ...user, ...updates };
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role || "USER" },
+      process.env.JWT_SECRET || "supersecretjwt",
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        mobile_number: user.mobile_number,
+        name: user.name,
+        role: user.role || "USER",
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error("Firebase login error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+

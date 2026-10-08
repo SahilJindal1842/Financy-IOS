@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticateToken as any);
 router.get("/summary", getBudgetSummary as any);
 router.post("/set", setBudget as any);
+router.post("/", setBudget as any);
 router.post("/set-bulk", setBulkBudgets as any);
 
 export default router;

@@ -133,12 +133,19 @@ export const getBudgetSummary = async (req: AuthRequest, res: Response) => {
     const remainingBudget = totalBudget - totalSpent;
     const overallUsagePercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
+    const settledMonthRecord = await db("monthly_savings")
+      .where(scope)
+      .andWhere("month", monthStr)
+      .first();
+    const isSettled = !!settledMonthRecord;
+
     res.json({
       totalBudget,
       totalSpent,
       remainingBudget,
       overallUsagePercentage,
-      budgets: summary
+      budgets: summary,
+      isSettled
     });
   } catch (error) {
     console.error("Error fetching budget summary:", error);
@@ -152,7 +159,7 @@ export const setBudget = async (req: AuthRequest, res: Response) => {
     const userId = scope.user_id;
     if (!userId && !req.user?.role) return res.status(401).json({ error: "Unauthorized" });
 
-    const { category_id, amount } = req.body;
+    const { category_id, amount, apply_to_year, apply_to_upcoming_months, year } = req.body;
     let monthStr = req.body.month as string;
 
     if (!category_id || amount === undefined) {
@@ -162,6 +169,64 @@ export const setBudget = async (req: AuthRequest, res: Response) => {
     if (!monthStr || !/^\d{4}-\d{2}$/.test(monthStr)) {
       const now = new Date();
       monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    const [strYear, strMonth] = monthStr.split("-").map(Number);
+    const targetYear = year ? Number(year) : strYear;
+
+    // Fetch all settled months for this user
+    const settledRecords = await db("monthly_savings").where({ user_id: userId }).select("month");
+    const settledMonthSet = new Set(settledRecords.map(r => r.month));
+
+    if (!apply_to_year && !apply_to_upcoming_months) {
+      if (settledMonthSet.has(monthStr)) {
+        return res.status(400).json({
+          error: `Month ${monthStr} has already been settled and locked. Budgets cannot be set or updated for a settled month.`
+        });
+      }
+    }
+
+    if (apply_to_year || apply_to_upcoming_months) {
+      const startM = apply_to_upcoming_months ? strMonth : 1;
+      let updatedCount = 0;
+
+      await db.transaction(async (trx) => {
+        for (let m = startM; m <= 12; m++) {
+          const mKey = `${targetYear}-${String(m).padStart(2, "0")}`;
+          // Skip settled months
+          if (settledMonthSet.has(mKey)) continue;
+
+          const mStr = `${mKey}-01`;
+          const existing = await trx("budgets")
+            .where({ user_id: userId, category_id, month: mStr })
+            .first();
+
+          if (existing) {
+            await trx("budgets")
+              .where({ id: existing.id })
+              .update({ amount: Number(amount) });
+          } else {
+            await trx("budgets")
+              .insert({ user_id: userId, category_id, amount: Number(amount), month: mStr });
+          }
+          updatedCount++;
+        }
+
+        // Activity notification
+        await trx("notifications").insert({
+          user_id: userId,
+          type: "budget",
+          title: "Budget Updated",
+          message: `Budget of ₹${Number(amount).toFixed(2)} applied across ${updatedCount} month(s) of ${targetYear}.`
+        });
+      });
+
+      return res.json({
+        success: true,
+        message: apply_to_upcoming_months
+          ? `Budget applied to upcoming months of ${targetYear} (${updatedCount} months active)`
+          : `Budget set monthly for all active months of ${targetYear} (${updatedCount} months)`
+      });
     }
 
     const monthDate = `${monthStr}-01`;
@@ -183,6 +248,14 @@ export const setBudget = async (req: AuthRequest, res: Response) => {
         .returning("*");
     }
 
+    // Insert activity notification
+    await db("notifications").insert({
+      user_id: userId,
+      type: "budget",
+      title: "Budget Updated",
+      message: `Budget of ₹${Number(amount).toFixed(2)} set for ${monthStr}.`
+    });
+
     res.json(result[0]);
   } catch (error) {
     console.error("Error setting budget:", error);
@@ -196,7 +269,7 @@ export const setBulkBudgets = async (req: AuthRequest, res: Response) => {
     const userId = scope.user_id;
     if (!userId && !req.user?.role) return res.status(401).json({ error: "Unauthorized" });
 
-    const { budgets } = req.body;
+    const { budgets, apply_to_year, apply_to_upcoming_months, year } = req.body;
     let monthStr = req.body.month as string;
 
     if (!Array.isArray(budgets)) {
@@ -208,26 +281,68 @@ export const setBulkBudgets = async (req: AuthRequest, res: Response) => {
       monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     }
 
-    const monthDate = `${monthStr}-01`;
+    const [strYear, strMonth] = monthStr.split("-").map(Number);
+    const targetYear = year ? Number(year) : strYear;
+
+    // Settled month set
+    const settledRecords = await db("monthly_savings").where({ user_id: userId }).select("month");
+    const settledMonthSet = new Set(settledRecords.map(r => r.month));
+
+    if (!apply_to_year && !apply_to_upcoming_months) {
+      if (settledMonthSet.has(monthStr)) {
+        return res.status(400).json({
+          error: `Month ${monthStr} has already been settled and locked. Cannot modify budget.`
+        });
+      }
+    }
 
     await db.transaction(async (trx) => {
-      for (const b of budgets) {
-        const existing = await trx("budgets")
-          .where({ user_id: userId, category_id: b.category_id, month: monthDate })
-          .first();
+      let monthDates: string[] = [];
 
-        if (existing) {
-          await trx("budgets")
-            .where({ id: existing.id })
-            .update({ amount: Number(b.amount) });
-        } else {
-          await trx("budgets")
-            .insert({ user_id: userId, category_id: b.category_id, amount: Number(b.amount), month: monthDate });
+      if (apply_to_year) {
+        monthDates = Array.from({ length: 12 }, (_, i) => `${targetYear}-${String(i + 1).padStart(2, "0")}-01`);
+      } else if (apply_to_upcoming_months) {
+        monthDates = Array.from({ length: 12 - strMonth + 1 }, (_, i) => `${targetYear}-${String(strMonth + i).padStart(2, "0")}-01`);
+      } else {
+        monthDates = [`${monthStr}-01`];
+      }
+
+      for (const mDate of monthDates) {
+        const mKey = mDate.substring(0, 7);
+        if (settledMonthSet.has(mKey)) continue;
+
+        for (const b of budgets) {
+          const existing = await trx("budgets")
+            .where({ user_id: userId, category_id: b.category_id, month: mDate })
+            .first();
+
+          if (existing) {
+            await trx("budgets")
+              .where({ id: existing.id })
+              .update({ amount: Number(b.amount) });
+          } else {
+            await trx("budgets")
+              .insert({ user_id: userId, category_id: b.category_id, amount: Number(b.amount), month: mDate });
+          }
         }
       }
+
+      await trx("notifications").insert({
+        user_id: userId,
+        type: "budget",
+        title: "Bulk Budgets Updated",
+        message: `Budgets successfully updated for ${monthDates.length} month(s).`
+      });
     });
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      message: apply_to_year
+        ? `Bulk budgets set monthly for all months of ${targetYear}`
+        : (apply_to_upcoming_months
+          ? `Bulk budgets set for upcoming months of ${targetYear}`
+          : `Bulk budgets set for ${monthStr}`)
+    });
   } catch (error) {
     console.error("Error setting bulk budgets:", error);
     res.status(500).json({ error: "Internal server error" });

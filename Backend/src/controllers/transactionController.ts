@@ -19,16 +19,39 @@ export const getTransactions = async (req: AuthRequest, res: Response, next: Nex
   try {
     const scope = getQueryScope(req);
     const whereClause = scope.user_id ? { "transactions.user_id": scope.user_id } : scope;
+    const { status, include_settled, month } = req.query;
     
-    const transactions = await db("transactions")
+    let query = db("transactions")
       .leftJoin("categories", "transactions.category_id", "categories.id")
+      .leftJoin("users", "transactions.user_id", "users.id")
       .where(whereClause)
-      .whereNull("transactions.deleted_at")
+      .whereNull("transactions.deleted_at");
+
+    if (month && typeof month === "string" && /^\d{4}-\d{2}$/.test(month)) {
+      query = query.where(function() {
+        this.where("transactions.settled_month", month)
+          .orWhereRaw("to_char(transactions.date, 'YYYY-MM') = ?", [month]);
+      });
+    }
+
+    if (status === "settled") {
+      query = query.where("transactions.is_settled", true);
+    } else if (status === "active") {
+      query = query.where(function() {
+        this.whereNull("transactions.is_settled").orWhere("transactions.is_settled", false);
+      });
+    } else {
+      // Include all transactions by default (both active and settled) so records are preserved for history and reports
+    }
+
+    const transactions = await query
       .select(
         "transactions.*",
         "categories.name as category_name",
         "categories.icon as category_icon",
-        "categories.color as category_color"
+        "categories.color as category_color",
+        "users.name as user_name",
+        "users.email as user_email"
       )
       .orderBy("transactions.date", "desc")
       .orderBy("transactions.created_at", "desc");
@@ -36,6 +59,11 @@ export const getTransactions = async (req: AuthRequest, res: Response, next: Nex
     const formatted = transactions.map((t) => ({
       id: t.id,
       userId: t.user_id,
+      user_id: t.user_id,
+      userName: t.user_name || "User",
+      user_name: t.user_name || "User",
+      userEmail: t.user_email || "",
+      user_email: t.user_email || "",
       accountId: t.account_id,
       categoryId: t.category_name || t.category_id,
       amount: t.type === "EXPENSE" ? -Math.abs(Number(t.amount)) : Math.abs(Number(t.amount)),
@@ -44,6 +72,9 @@ export const getTransactions = async (req: AuthRequest, res: Response, next: Nex
       note: t.notes || t.description,
       merchant: t.description || t.category_name || "Expense",
       destinationAccountId: t.destination_account_id,
+      isSettled: !!t.is_settled,
+      settledMonth: t.settled_month,
+      settledForReports: !!t.settled_for_reports,
       createdAt: t.created_at,
       updatedAt: t.updated_at
     }));
@@ -73,6 +104,18 @@ export const createTransaction = async (req: AuthRequest, res: Response, next: N
 
     const dateVal = req.body.date ? new Date(req.body.date) : new Date();
     const date = isNaN(dateVal.getTime()) ? new Date().toISOString().split("T")[0] : dateVal.toISOString().split("T")[0];
+
+    // Check if the month is already settled and locked
+    const txMonth = date.substring(0, 7);
+    const settledMonth = await db("monthly_savings")
+      .where({ user_id: userId, month: txMonth })
+      .first();
+
+    if (settledMonth) {
+      return res.status(400).json({
+        error: `Month ${txMonth} has already been settled and locked. Adding new expenses or income to a settled month is not allowed.`
+      });
+    }
 
     // Ensure valid account_id belonging to user
     let accountId = req.body.account_id || req.body.accountId;
@@ -210,11 +253,16 @@ export const deleteTransaction = async (req: AuthRequest, res: Response, next: N
     const { id } = req.params;
     const whereClause = scope.user_id ? { id, user_id: scope.user_id } : { id };
     
-    const deleted = await db("transactions").where(whereClause)
-      .whereNull("transactions.deleted_at").update({ deleted_at: db.fn.now() });
-    if (!deleted) {
+    const existing = await db("transactions").where(whereClause).whereNull("deleted_at").first();
+    if (!existing) {
       return res.status(404).json({ error: "Transaction not found" });
     }
+
+    if (existing.is_settled) {
+      return res.status(400).json({ error: "Cannot delete a settled transaction. Settled transactions are preserved for monthly reports." });
+    }
+
+    await db("transactions").where(whereClause).update({ deleted_at: db.fn.now() });
     res.json({ success: true });
   } catch (error) {
     next(error);

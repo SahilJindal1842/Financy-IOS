@@ -1,7 +1,6 @@
 import cron from "node-cron";
 import db from "../db/db";
-import { v4 as uuidv4 } from "uuid";
-
+import crypto from "crypto";
 
 export const startRecurringJob = () => {
   // Run every day at 1:00 AM
@@ -26,7 +25,7 @@ export const startRecurringJob = () => {
         // 2. Insert into transactions table if auto_create is true
         if (rx.auto_create) {
             const [newTx] = await db("transactions").insert({
-              id: uuidv4(),
+              id: crypto.randomUUID(),
               user_id: rx.user_id,
               type: rx.type,
               amount: rx.amount,
@@ -41,7 +40,7 @@ export const startRecurringJob = () => {
             
             // 3. Create notification
             await db("notifications").insert({
-              id: uuidv4(),
+              id: crypto.randomUUID(),
               user_id: rx.user_id,
               title: "Automated Expense Paid",
               message: `Processed ${rx.merchant || 'recurring'} expense of $${rx.amount}`,

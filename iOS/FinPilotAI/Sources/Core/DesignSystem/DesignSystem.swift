@@ -2,11 +2,22 @@ import SwiftUI
 
 // MARK: - Network Configuration
 enum NetworkConfig {
-    #if targetEnvironment(simulator)
-    static let baseURLString = "http://127.0.0.1:3000/api"
-    #else
-    static let baseURLString = "http://192.168.1.4:3000/api"
-    #endif
+    static var baseURLString: String {
+        if let configURL = Bundle.main.infoDictionary?["API_BASE_URL"] as? String,
+           !configURL.isEmpty,
+           !configURL.contains("$(") {
+            return configURL
+        }
+        #if DEBUG
+            #if targetEnvironment(simulator)
+            return "http://127.0.0.1:3000/api"
+            #else
+            return "http://192.168.68.45:3000/api"
+            #endif
+        #else
+            return "https://api.financy.app/api"
+        #endif
+    }
     
     static var baseURL: URL {
         return URL(string: baseURLString)!
@@ -21,6 +32,13 @@ enum NetworkConfig {
 extension Notification.Name {
     static let transactionUpdated = Notification.Name("FinPilotTransactionUpdated")
     static let userLoggedOut = Notification.Name("FinPilotUserLoggedOut")
+    static let navigateToTab = Notification.Name("FinPilotNavigateToTab")
+    static let showAddRecurring = Notification.Name("FinPilotShowAddRecurring")
+    static let showManageCategories = Notification.Name("FinPilotShowManageCategories")
+    static let showPaywall = Notification.Name("FinPilotShowPaywall")
+    static let showAddCategory = Notification.Name("FinPilotShowAddCategory")
+    static let showSetBudget = Notification.Name("FinPilotShowSetBudget")
+    static let filterTransactions = Notification.Name("FinPilotFilterTransactions")
 }
 
 // MARK: - App JSON Decoder
@@ -72,14 +90,61 @@ enum FinPilotColors {
     static let primaryLight = Color(hex: "#5cb85c")
     static let primaryDark = Color(hex: "#0B7A44")
     
-    // Backgrounds
-    static let background = Color(hex: "#F8F9FA")
-    static let surface = Color.white
-    static let secondary = Color.gray
+    // Backgrounds (Adaptive for Light & Dark mode)
+    static var background: Color {
+        Color(UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.05, green: 0.07, blue: 0.09, alpha: 1.0) // #0D1117 (sleek dark)
+                : UIColor(red: 0.97, green: 0.98, blue: 0.98, alpha: 1.0) // #F8F9FA
+        })
+    }
     
-    // Text
-    static let textPrimary = Color.black
-    static let textSecondary = Color.gray
+    static var surface: Color {
+        Color(UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.09, green: 0.12, blue: 0.16, alpha: 1.0) // #161F28 (card surface)
+                : UIColor.white
+        })
+    }
+    
+    static var secondary: Color {
+        Color(UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.60, green: 0.65, blue: 0.72, alpha: 1.0)
+                : UIColor.gray
+        })
+    }
+    
+    static var border: Color {
+        Color(UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.18, green: 0.23, blue: 0.29, alpha: 1.0)
+                : UIColor(red: 0.90, green: 0.91, blue: 0.92, alpha: 1.0)
+        })
+    }
+    
+    static var divider: Color {
+        Color(UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.15, green: 0.20, blue: 0.26, alpha: 1.0)
+                : UIColor(red: 0.90, green: 0.91, blue: 0.92, alpha: 1.0)
+        })
+    }
+    
+    // Text (Adaptive for Light & Dark mode)
+    static var textPrimary: Color {
+        Color(UIColor { trait in
+            trait.userInterfaceStyle == .dark ? UIColor.white : UIColor.black
+        })
+    }
+    
+    static var textSecondary: Color {
+        Color(UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.65, green: 0.70, blue: 0.78, alpha: 1.0)
+                : UIColor(red: 0.40, green: 0.45, blue: 0.50, alpha: 1.0)
+        })
+    }
     
     // Status
     static let success = Color(hex: "#0F9D58")
@@ -105,6 +170,7 @@ enum FinPilotTypography {
     static let callout = Font.system(.callout, design: .rounded)
     static let subheadline = Font.system(.subheadline, design: .rounded)
     static let caption = Font.system(.caption, design: .rounded)
+    static let button = Font.system(.headline, design: .rounded).bold()
 }
 
 // Helper for Hex Colors

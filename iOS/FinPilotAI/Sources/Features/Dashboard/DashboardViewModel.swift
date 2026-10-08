@@ -8,6 +8,7 @@ final class DashboardViewModel: ObservableObject {
     @Published var totalIncome: Double = 0.0
     @Published var totalExpenses: Double = 0.0
     @Published var balance: Double = 0.0
+    @Published var availableMoney: Double = 0.0
     @Published var savings: Double = 0.0
     @Published var budget: Double = 0.0
     @Published var remainingBudget: Double = 0.0
@@ -21,6 +22,62 @@ final class DashboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
     
+    // Settlement & Savings Module
+    @Published var isSettled: Bool = false
+    @Published var isEndOfMonth: Bool = false
+    @Published var endOfMonthDate: String = ""
+    @Published var settlementMonth: String = ""
+    @Published var leftoverSavings: Double = 0.0
+    @Published var totalAccumulatedSavings: Double = 0.0
+    @Published var isSettling: Bool = false
+    @Published var settlementSuccessMessage: String? = nil
+    
+    // Month-wise filtering
+    @Published var selectedMonth: String = {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM"
+        return df.string(from: Date())
+    }()
+    
+    @Published var displayMonthName: String = {
+        let df = DateFormatter()
+        df.dateFormat = "MMMM yyyy"
+        return df.string(from: Date())
+    }()
+    
+    struct MonthOption: Identifiable, Hashable {
+        let id: String
+        let key: String
+        let label: String
+    }
+    
+    var availableMonths: [MonthOption] {
+        let calendar = Calendar.current
+        let now = Date()
+        var options: [MonthOption] = []
+        
+        let keyFormatter = DateFormatter()
+        keyFormatter.dateFormat = "yyyy-MM"
+        
+        let labelFormatter = DateFormatter()
+        labelFormatter.dateFormat = "MMMM yyyy"
+        
+        for offset in 0..<12 {
+            if let date = calendar.date(byAdding: .month, value: -offset, to: now) {
+                let key = keyFormatter.string(from: date)
+                let label = labelFormatter.string(from: date)
+                options.append(MonthOption(id: key, key: key, label: label))
+            }
+        }
+        return options
+    }
+    
+    func selectMonth(_ monthKey: String, displayName: String, userRole: String? = nil) async {
+        self.selectedMonth = monthKey
+        self.displayMonthName = displayName
+        await loadDashboardData(userRole: userRole, month: monthKey)
+    }
+
     // Admin features
     @Published var isAdmin: Bool = false
     @Published var isConsolidated: Bool = false
@@ -39,9 +96,20 @@ final class DashboardViewModel: ObservableObject {
         }
     }
     
-    func loadDashboardData(targetUserId: String? = nil, userRole: String? = nil) async {
+    func loadDashboardData(targetUserId: String? = nil, userRole: String? = nil, month: String? = nil) async {
         isLoading = true
         errorMessage = nil
+        
+        if let month = month {
+            self.selectedMonth = month
+            let dfIn = DateFormatter()
+            dfIn.dateFormat = "yyyy-MM"
+            if let d = dfIn.date(from: month) {
+                let dfOut = DateFormatter()
+                dfOut.dateFormat = "MMMM yyyy"
+                self.displayMonthName = dfOut.string(from: d)
+            }
+        }
         
         let role = userRole?.uppercased()
         let adminMode = (role == "ADMIN") || self.isAdmin
@@ -51,12 +119,12 @@ final class DashboardViewModel: ObservableObject {
             if adminMode {
                 let uid = targetUserId ?? selectedUserId
                 if uid == "all" || uid.isEmpty {
-                    endpoint = "/admin/dashboard"
+                    endpoint = "/admin/dashboard?month=\(selectedMonth)"
                 } else {
-                    endpoint = "/admin/dashboard?user_id=\(uid)"
+                    endpoint = "/admin/dashboard?user_id=\(uid)&month=\(selectedMonth)"
                 }
             } else {
-                endpoint = "/users/dashboard"
+                endpoint = "/users/dashboard?month=\(selectedMonth)"
             }
             
             let stats: DashboardStats = try await APIManager.shared.request(endpoint: endpoint)
@@ -69,7 +137,9 @@ final class DashboardViewModel: ObservableObject {
             self.monthlyIncome = stats.monthlyIncome
             self.totalIncome = stats.totalIncome
             self.totalExpenses = stats.totalExpenses
-            self.balance = stats.balance
+            let avail = stats.availableMoney ?? stats.balance
+            self.availableMoney = avail
+            self.balance = avail
             self.savings = stats.savings
             
             let budgetVal = stats.totalBudget ?? stats.budget ?? 0.0
@@ -81,6 +151,13 @@ final class DashboardViewModel: ObservableObject {
             self.savingsGrowth = stats.savingsGrowth ?? 0
             self.transactions = stats.transactions ?? []
             self.upcomingBills = stats.upcomingBills ?? []
+            
+            self.isSettled = stats.isSettled ?? false
+            self.isEndOfMonth = stats.isEndOfMonth ?? false
+            self.endOfMonthDate = stats.endOfMonthDate ?? ""
+            self.settlementMonth = stats.settlementMonth ?? ""
+            self.leftoverSavings = stats.leftoverSavings ?? 0.0
+            self.totalAccumulatedSavings = stats.totalAccumulatedSavings ?? 0.0
             
             if adminMode && adminUsers.isEmpty {
                 await fetchAdminUsers()
@@ -98,6 +175,36 @@ final class DashboardViewModel: ObservableObject {
         isLoading = false
     }
     
+    func settleCurrentMonth(notes: String? = nil, userRole: String? = nil) async -> Bool {
+        isSettling = true
+        errorMessage = nil
+        do {
+            var bodyObj: [String: Any] = [:]
+            if !settlementMonth.isEmpty {
+                bodyObj["month"] = settlementMonth
+            }
+            if let n = notes, !n.isEmpty {
+                bodyObj["notes"] = n
+            }
+            if selectedUserId != "all" && !selectedUserId.isEmpty {
+                bodyObj["user_id"] = selectedUserId
+            }
+            let data = try JSONSerialization.data(withJSONObject: bodyObj)
+            let res: SettlementResultResponse = try await APIManager.shared.request(endpoint: "/settlement/settle", method: "POST", body: data)
+            self.settlementSuccessMessage = res.message
+            
+            await loadDashboardData(targetUserId: selectedUserId, userRole: userRole)
+            NotificationCenter.default.post(name: .transactionUpdated, object: nil)
+            isSettling = false
+            return true
+        } catch {
+            print("Failed to settle month: \(error)")
+            self.errorMessage = error.localizedDescription
+            isSettling = false
+            return false
+        }
+    }
+    
     func selectUser(id: String, name: String, userRole: String?) async {
         self.selectedUserId = id
         self.selectedUserName = name
@@ -111,6 +218,7 @@ final class DashboardViewModel: ObservableObject {
         totalIncome = 0.0
         totalExpenses = 0.0
         balance = 0.0
+        availableMoney = 0.0
         savings = 0.0
         budget = 0.0
         remainingBudget = 0.0
@@ -118,6 +226,14 @@ final class DashboardViewModel: ObservableObject {
         incomeGrowth = 0.0
         expenseGrowth = 0.0
         savingsGrowth = 0.0
+        isSettled = false
+        isEndOfMonth = false
+        endOfMonthDate = ""
+        settlementMonth = ""
+        leftoverSavings = 0.0
+        totalAccumulatedSavings = 0.0
+        isSettling = false
+        settlementSuccessMessage = nil
         currency = "INR"
         transactions = []
         upcomingBills = []

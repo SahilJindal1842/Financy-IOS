@@ -19,7 +19,7 @@ const mapToCamel = (cat: any): any => ({
   icon: cat.icon,
   color: cat.color || "#3357ff",
   type: cat.type || "expense",
-  isSystem: !cat.user_id,
+  isSystem: !!(cat.is_system || !cat.user_id),
   createdAt: cat.created_at,
   updatedAt: cat.updated_at,
   subcategories: cat.subcategories?.map(mapToCamel) || []
@@ -77,8 +77,22 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
       icon: icon || "tag.fill",
       color: color || "#3357ff",
       type: type || "expense",
-      parent_id: parent_id || null
+      parent_id: parent_id || null,
+      is_system: false
     }).returning("*");
+
+    try {
+      if (req.user?.id) {
+        await db("notifications").insert({
+          user_id: req.user.id,
+          type: "category",
+          title: "New Category Added",
+          message: `Category "${name}" was created successfully.`
+        });
+      }
+    } catch (notifErr) {
+      console.error("Error creating category notification:", notifErr);
+    }
 
     res.json(mapToCamel(category));
   } catch (error) {
@@ -127,17 +141,24 @@ export const deleteCategory = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     
-    // Only allow deleting user-owned categories
-    const category = await db("categories")
-      .where({ id, user_id: req.user?.id })
-      .first();
+    // Check if category exists
+    const category = await db("categories").where({ id }).first();
 
     if (!category) {
-      return res.status(404).json({ error: "Category not found or cannot delete system categories" });
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    // Default / system categories can NEVER be deleted
+    if (category.is_system || !category.user_id) {
+      return res.status(403).json({ error: "Default system categories are protected and cannot be deleted." });
+    }
+
+    if (category.user_id !== req.user?.id) {
+      return res.status(403).json({ error: "Unauthorized to delete this category." });
     }
 
     await db("categories").where({ id }).del();
-    res.json({ success: true });
+    res.json({ success: true, message: `Category ${category.name} deleted successfully.` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

@@ -70,7 +70,7 @@ struct ReportsView: View {
             Spacer()
         }
         .padding(16)
-        .background(Color.white)
+        .background(FinPilotColors.surface)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.03), radius: 5, x: 0, y: 2)
     }
@@ -125,7 +125,7 @@ struct ReportsView: View {
                 }
                 .frame(height: 200)
                 .padding()
-                .background(Color.white)
+                .background(FinPilotColors.surface)
                 .cornerRadius(16)
                 .shadow(color: .black.opacity(0.03), radius: 5, x: 0, y: 2)
             }
@@ -154,7 +154,7 @@ struct ReportsView: View {
                 }
                 .frame(height: 200)
                 .padding()
-                .background(Color.white)
+                .background(FinPilotColors.surface)
                 .cornerRadius(16)
                 .shadow(color: .black.opacity(0.03), radius: 5, x: 0, y: 2)
             }

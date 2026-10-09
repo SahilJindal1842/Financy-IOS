@@ -5,12 +5,14 @@ import path from "path";
 // Load .env from the root of the project
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-const dbUrl = process.env.DATABASE_URL || "postgres://finpilot:finpilot@localhost:5433/finpilot";
+const defaultSupabaseUrl = "postgresql://postgres.ktwlxmhavcvihlwvnnmg:Anni%40123%23%2A%24@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres";
+const dbUrl = process.env.DATABASE_URL || defaultSupabaseUrl;
 const isCloudOrSsl =
   dbUrl.includes("supabase.co") ||
   dbUrl.includes("pooler.supabase.com") ||
   dbUrl.includes("sslmode=require") ||
-  process.env.DB_SSL === "true";
+  process.env.DB_SSL === "true" ||
+  process.env.NODE_ENV === "production";
 
 const dbConfig: Knex.Config = {
   client: "pg",

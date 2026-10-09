@@ -20,6 +20,7 @@ import userRoutes from "./routes/userRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import settlementRoutes from "./routes/settlementRoutes";
 import entitlementRoutes from "./routes/entitlementRoutes";
+import db from "./db/db";
 
 dotenv.config();
 
@@ -93,17 +94,37 @@ app.use("/api/entitlements", entitlementRoutes);
 app.use("/api/purchases", entitlementRoutes);
 
 // Health check endpoints for load balancers and orchestrators
-const healthResponse = (req: Request, res: Response) => {
+app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({
     status: "healthy",
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
   });
-};
+});
 
-app.get("/health", healthResponse);
-app.get("/api/health", healthResponse);
+app.get("/api/health", async (req: Request, res: Response) => {
+  let dbStatus = "unknown";
+  let dbError = null;
+  try {
+    await db.raw("SELECT 1");
+    dbStatus = "connected";
+  } catch (err: any) {
+    dbStatus = "error";
+    dbError = err.message || String(err);
+  }
+
+  res.status(200).json({
+    status: dbStatus === "connected" ? "healthy" : "degraded",
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development",
+    database: {
+      status: dbStatus,
+      error: dbError,
+    },
+  });
+});
 
 // Global error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

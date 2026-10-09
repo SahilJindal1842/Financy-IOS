@@ -156,10 +156,9 @@ export const login = async (req: Request, res: Response) => {
       process.env.JWT_SECRET || "supersecretjwt",
       { expiresIn: "1h" }
     );
-    res.json({ token, user: { id: user.id, email: user.email, mobile_number: user.mobile_number, name: user.name, role: user.role } });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+  } catch (error: any) {
+    console.error("[Login Error]:", error);
+    res.status(500).json({ error: error?.message || "Internal server error" });
   }
 };
 

@@ -131,7 +131,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, mobile_number, password } = req.body;
+    const { email, mobile_number, password } = req.body || {};
     if ((!email && !mobile_number) || !password) {
       return res.status(400).json({ error: "Email/mobile and password are required" });
     }

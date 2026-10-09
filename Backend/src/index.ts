@@ -63,6 +63,7 @@ app.use(
 );
 
 app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Static uploads with cross-origin caching
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads"), { maxAge: "7d" }));

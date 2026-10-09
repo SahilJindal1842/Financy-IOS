@@ -8,15 +8,7 @@ enum NetworkConfig {
            !configURL.contains("$(") {
             return configURL
         }
-        #if DEBUG
-            #if targetEnvironment(simulator)
-            return "http://127.0.0.1:3000/api"
-            #else
-            return "http://192.168.68.45:3000/api"
-            #endif
-        #else
-            return "https://api.financy.app/api"
-        #endif
+        return "https://financy-ios.onrender.com/api"
     }
     
     static var baseURL: URL {

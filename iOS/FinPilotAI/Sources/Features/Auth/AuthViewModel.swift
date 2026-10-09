@@ -42,7 +42,7 @@ final class AuthViewModel: ObservableObject {
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 15
+            request.timeoutInterval = 60
             
             var payload: [String: Any] = [
                 "firebaseUid": firebaseUid,
@@ -101,7 +101,7 @@ final class AuthViewModel: ObservableObject {
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 15
+            request.timeoutInterval = 60
             
             var payload: [String: String] = ["password": password]
             if let userEmail = trimmedEmail, !userEmail.isEmpty {
@@ -191,7 +191,7 @@ final class AuthViewModel: ObservableObject {
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 15
+            request.timeoutInterval = 60
             
             var payload: [String: String] = [
                 "name": fullName,
@@ -256,7 +256,7 @@ final class AuthViewModel: ObservableObject {
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 15
+            request.timeoutInterval = 60
             
             var payload: [String: String] = [
                 "provider": provider,
@@ -303,7 +303,7 @@ final class AuthViewModel: ObservableObject {
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 15
+            request.timeoutInterval = 60
             
             var payload: [String: String] = [
                 "otp": code
@@ -345,7 +345,7 @@ final class AuthViewModel: ObservableObject {
             var request = URLRequest(url: url)
             request.httpMethod = "PUT"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 15
+            request.timeoutInterval = 60
             if let token = try? KeychainManager.shared.getToken(for: "user_token") {
                 request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             }
@@ -542,7 +542,7 @@ final class AuthViewModel: ObservableObject {
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 15
+            request.timeoutInterval = 60
             
             var payload: [String: String] = [
                 "name": "User",

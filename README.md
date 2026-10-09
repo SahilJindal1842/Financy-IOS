@@ -113,14 +113,46 @@ npm run build          # Builds production bundle (13 optimized routes)
 
 ---
 
-## Cloud Deployment
+## 100% Free Cloud Deployment Setup
 
-### 1-Click Deploy to [Render.com](https://render.com)
-The included [`render.yaml`](render.yaml) automatically builds and provisions the API service:
-1. Connect your repository to **Render**.
-2. Select **Blueprint** (`render.yaml`).
-3. Set your `DATABASE_URL` environment variable (Supabase connection string).
-4. Deploy! Your API will be live at `https://<service-name>.onrender.com`.
+You can host the entire system completely for **$0/month** using free tiers:
+
+| Component | Free Platform | Plan | Monthly Cost |
+| :--- | :--- | :--- | :--- |
+| **Database** | [Supabase](https://supabase.com) | Free Tier (500MB Postgres, 50k MAU) | **$0.00** |
+| **Backend API** | [Render](https://render.com) | Free Web Service (750 free hrs/mo, SSL) | **$0.00** |
+| **Admin Dashboard** | [Vercel](https://vercel.com) | Free Hobby Plan (Next.js Edge CDN, SSL) | **$0.00** |
+
+---
+
+### Step 1: Database (Already Live on Supabase)
+Your PostgreSQL database is already configured and running on Supabase:
+* Connection String: Available in your Supabase Dashboard (`Database Settings` → `Connection Pooling`).
+
+---
+
+### Step 2: Deploy Backend to Render (Free)
+Click the button below to deploy the Express API to Render:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/SahilJindal1842/Financy-IOS)
+
+1. Sign up/log in at [Render.com](https://render.com) (free, sign in with GitHub).
+2. Click **Apply Blueprint** using `render.yaml`.
+3. When prompted for `DATABASE_URL`, paste your Supabase PostgreSQL connection string.
+4. Your API will build and go live at `https://financy-api.onrender.com` (with automatic SSL and `/health` check).
+
+---
+
+### Step 3: Deploy Admin Dashboard to Vercel (Free)
+Click the button below to deploy the Next.js 14 Admin Dashboard to Vercel:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FSahilJindal1842%2FFinancy-IOS&root-directory=AdminDashboard&project-name=financy-admin&env=NEXT_PUBLIC_API_URL)
+
+1. Sign up/log in at [Vercel.com](https://vercel.com) (free, sign in with GitHub).
+2. It will automatically detect Next.js 14 and the `AdminDashboard/` root directory.
+3. In the **Environment Variables** prompt, set:
+   * `NEXT_PUBLIC_API_URL`: Your Render backend URL (e.g. `https://financy-api.onrender.com`).
+4. Click **Deploy**. Your dashboard will be live on Vercel's global CDN at `https://financy-admin.vercel.app`.
 
 ---
 

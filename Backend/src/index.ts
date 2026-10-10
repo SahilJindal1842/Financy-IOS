@@ -78,8 +78,11 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads"), { maxAge
 const candidateWebsitePaths = [
   path.join(process.cwd(), "public"),
   path.join(process.cwd(), "Website"),
+  path.join(process.cwd(), "Backend/public"),
   path.join(__dirname, "../public"),
   path.join(__dirname, "../../Website"),
+  path.join(__dirname, "../Website"),
+  path.join(__dirname, "../../../Website"),
 ];
 
 for (const candidate of candidateWebsitePaths) {

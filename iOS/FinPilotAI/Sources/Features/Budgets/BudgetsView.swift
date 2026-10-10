@@ -167,85 +167,414 @@ struct BudgetsView: View {
     
     @ViewBuilder
     private func donutChartSection(summary: BudgetSummaryResponse) -> some View {
-        VStack {
+        VStack(spacing: 16) {
+            // Card Header
+            HStack {
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(FinPilotColors.primary.opacity(0.12))
+                            .frame(width: 34, height: 34)
+                        Image(systemName: "chart.pie.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(FinPilotColors.primary)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Monthly Budget Overview")
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                        Text(summary.totalBudget > 0 ? "Tracking real-time burn rate & allocation" : "No budget set for \(monthDisplayString(viewModel.selectedMonth))")
+                            .font(.system(size: 12))
+                            .foregroundColor(FinPilotColors.textSecondary)
+                    }
+                }
+                
+                Spacer()
+                
+                budgetStatusPill(for: summary)
+            }
+            .padding(.horizontal, 4)
+            
+            Divider()
+                .background(FinPilotColors.divider.opacity(0.6))
+            
+            // Donut Chart Graphic
             ZStack {
-                // Background Track
+                // Outer Subtle Concentric Outline
                 Circle()
-                    .stroke(lineWidth: 24)
-                    .foregroundColor(FinPilotColors.surface)
+                    .stroke(FinPilotColors.divider.opacity(0.35), lineWidth: 1)
+                    .frame(width: 224, height: 224)
                 
-                // Progress
+                // Visible Background Track (Fixed so it is never invisible)
                 Circle()
-                    .trim(from: 0.0, to: CGFloat(min(summary.overallUsagePercentage / 100.0, 1.0)))
-                    .stroke(style: StrokeStyle(lineWidth: 24, lineCap: .round, lineJoin: .round))
-                    .foregroundColor(statusColor(for: summary.overallUsagePercentage))
-                    .rotationEffect(Angle(degrees: 270.0))
-                    .animation(.easeInOut, value: summary.overallUsagePercentage)
+                    .stroke(
+                        FinPilotColors.border.opacity(0.85),
+                        style: StrokeStyle(lineWidth: 20, lineCap: .round)
+                    )
+                    .frame(width: 190, height: 190)
                 
-                // Inner Text
-                VStack(spacing: 4) {
-                    Text("Spent")
-                        .font(FinPilotTypography.caption)
-                        .foregroundColor(FinPilotColors.textSecondary)
-                    Text(String(format: "₹ %.0f", summary.totalSpent))
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(FinPilotColors.textPrimary)
-                    Text(String(format: "of ₹ %.0f", summary.totalBudget))
-                        .font(FinPilotTypography.caption)
-                        .foregroundColor(FinPilotColors.textSecondary)
+                if summary.totalBudget > 0 {
+                    let usageFraction = max(0.0, min(abs(summary.overallUsagePercentage) / 100.0, 1.0))
+                    // Progress Arc with Gradient
+                    Circle()
+                        .trim(from: 0.0, to: CGFloat(usageFraction))
+                        .stroke(
+                            LinearGradient(
+                                colors: ringGradientColors(for: abs(summary.overallUsagePercentage)),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 20, lineCap: .round, lineJoin: .round)
+                        )
+                        .rotationEffect(Angle(degrees: -90.0))
+                        .frame(width: 190, height: 190)
+                        .shadow(color: statusColor(for: abs(summary.overallUsagePercentage)).opacity(0.28), radius: 6, x: 0, y: 3)
+                        .animation(.easeInOut(duration: 0.4), value: summary.overallUsagePercentage)
+                } else {
+                    // Empty placeholder dashed indicator
+                    Circle()
+                        .stroke(
+                            FinPilotColors.primary.opacity(0.25),
+                            style: StrokeStyle(lineWidth: 2, dash: [6, 6])
+                        )
+                        .frame(width: 190, height: 190)
+                }
+                
+                // Inner Subtle Concentric Ring
+                Circle()
+                    .stroke(FinPilotColors.divider.opacity(0.25), lineWidth: 1)
+                    .frame(width: 154, height: 154)
+                
+                // Center Metrics Content
+                if summary.totalBudget > 0 {
+                    VStack(spacing: 3) {
+                        Text("TOTAL SPENT")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundColor(FinPilotColors.textSecondary)
+                            .tracking(0.8)
+                        
+                        Text(String(format: "₹ %.0f", abs(summary.totalSpent)))
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                            .minimumScaleFactor(0.7)
+                            .lineLimit(1)
+                        
+                        Text(String(format: "of ₹ %.0f planned", summary.totalBudget))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(FinPilotColors.textSecondary)
+                        
+                        Text(String(format: "%.1f%% used", abs(summary.overallUsagePercentage)))
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundColor(statusColor(for: abs(summary.overallUsagePercentage)))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(statusColor(for: abs(summary.overallUsagePercentage)).opacity(0.12))
+                            .cornerRadius(4)
+                            .padding(.top, 2)
+                    }
+                } else {
+                    Button(action: {
+                        selectedCategoryId = nil
+                        setBudgetInitialMode = .all
+                        showingSetBudget = true
+                    }) {
+                        VStack(spacing: 4) {
+                            ZStack {
+                                Circle()
+                                    .fill(FinPilotColors.primary.opacity(0.12))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(FinPilotColors.primary)
+                            }
+                            
+                            Text("Set Budget")
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .foregroundColor(FinPilotColors.textPrimary)
+                            
+                            Text("Tap to allocate")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(FinPilotColors.primary)
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
-            .frame(width: 200, height: 200)
-            .padding(.vertical, 20)
+            .frame(width: 224, height: 224)
+            .padding(.vertical, 10)
             
-            HStack(spacing: 40) {
-                VStack {
-                    Text("Remaining")
-                        .font(FinPilotTypography.subheadline)
-                        .foregroundColor(FinPilotColors.textSecondary)
-                    Text(String(format: "₹ %.0f", summary.remainingBudget))
-                        .font(FinPilotTypography.headline)
-                        .foregroundColor(FinPilotColors.textPrimary)
-                }
+            // 2x2 Metrics Overview Grid
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                metricTile(
+                    icon: "wallet.pass.fill",
+                    iconColor: summary.remainingBudget >= 0 ? FinPilotColors.primary : FinPilotColors.error,
+                    title: "Remaining",
+                    value: String(format: "₹ %.0f", summary.remainingBudget),
+                    subtitle: summary.remainingBudget >= 0 ? "Under budget" : "Over budget"
+                )
                 
-                VStack {
-                    Text("Usage")
-                        .font(FinPilotTypography.subheadline)
-                        .foregroundColor(FinPilotColors.textSecondary)
-                    Text(String(format: "%.1f%%", summary.overallUsagePercentage))
-                        .font(FinPilotTypography.headline)
-                        .foregroundColor(statusColor(for: summary.overallUsagePercentage))
+                metricTile(
+                    icon: "target",
+                    iconColor: Color(hex: "#0EA5E9"),
+                    title: "Total Budget",
+                    value: String(format: "₹ %.0f", summary.totalBudget),
+                    subtitle: "Planned allocation"
+                )
+                
+                metricTile(
+                    icon: "calendar.badge.clock",
+                    iconColor: Color(hex: "#8B5CF6"),
+                    title: "Daily Safe Spend",
+                    value: String(format: "₹ %.0f/d", dailySafeSpend(summary: summary)),
+                    subtitle: "\(daysRemainingInMonth()) days left"
+                )
+                
+                metricTile(
+                    icon: "speedometer",
+                    iconColor: statusColor(for: abs(summary.overallUsagePercentage)),
+                    title: "Usage Pace",
+                    value: String(format: "%.1f%%", abs(summary.overallUsagePercentage)),
+                    subtitle: paceDescription(for: summary)
+                )
+            }
+            .padding(.top, 4)
+            
+            // If totalBudget == 0, show CTA button
+            if summary.totalBudget == 0 {
+                Button(action: {
+                    selectedCategoryId = nil
+                    setBudgetInitialMode = .all
+                    showingSetBudget = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 15, weight: .bold))
+                        Text("Set Budget for \(monthDisplayString(viewModel.selectedMonth))")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        LinearGradient(
+                            colors: [FinPilotColors.primary, FinPilotColors.primaryDark],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(12)
+                    .shadow(color: FinPilotColors.primary.opacity(0.3), radius: 6, x: 0, y: 3)
                 }
+                .padding(.top, 4)
             }
         }
-        .padding()
+        .padding(18)
         .background(FinPilotColors.surface)
         .cornerRadius(24)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(FinPilotColors.border.opacity(0.7), lineWidth: 1)
+        )
         .padding(.horizontal, 20)
-        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
+    }
+    
+    // MARK: - Metric Tile Component
+    private func metricTile(icon: String, iconColor: Color, title: String, value: String, subtitle: String) -> some View {
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(iconColor.opacity(0.12))
+                    .frame(width: 32, height: 32)
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(iconColor)
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(FinPilotColors.textSecondary)
+                Text(value)
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(FinPilotColors.textPrimary)
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.system(size: 10))
+                    .foregroundColor(FinPilotColors.textSecondary.opacity(0.8))
+                    .lineLimit(1)
+            }
+            
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(FinPilotColors.background)
+        .cornerRadius(12)
+    }
+    
+    // MARK: - Budget Status Pill
+    @ViewBuilder
+    private func budgetStatusPill(for summary: BudgetSummaryResponse) -> some View {
+        let usage = abs(summary.overallUsagePercentage)
+        if summary.totalBudget <= 0 {
+            HStack(spacing: 4) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 9))
+                Text("NOT SET")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .foregroundColor(FinPilotColors.primary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(FinPilotColors.primary.opacity(0.12))
+            .cornerRadius(6)
+        } else if usage > 100 {
+            HStack(spacing: 4) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 9))
+                Text("OVER BUDGET")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .foregroundColor(FinPilotColors.error)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(FinPilotColors.error.opacity(0.12))
+            .cornerRadius(6)
+        } else if usage >= 90 {
+            HStack(spacing: 4) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .font(.system(size: 9))
+                Text("CRITICAL")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .foregroundColor(FinPilotColors.critical)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(FinPilotColors.critical.opacity(0.12))
+            .cornerRadius(6)
+        } else if usage >= 70 {
+            HStack(spacing: 4) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .font(.system(size: 9))
+                Text("70%+ USED")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .foregroundColor(FinPilotColors.warning)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(FinPilotColors.warning.opacity(0.12))
+            .cornerRadius(6)
+        } else {
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 9))
+                Text("ON TRACK")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .foregroundColor(FinPilotColors.success)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(FinPilotColors.success.opacity(0.12))
+            .cornerRadius(6)
+        }
+    }
+    
+    // MARK: - Daily Safe Spend Calculation
+    private func dailySafeSpend(summary: BudgetSummaryResponse) -> Double {
+        let calendar = Calendar.current
+        let range = calendar.range(of: .day, in: .month, for: viewModel.selectedMonth) ?? 1..<31
+        let totalDays = range.count
+        let currentDay = calendar.component(.day, from: Date())
+        let isCurrentMonth = calendar.isDate(viewModel.selectedMonth, equalTo: Date(), toGranularity: .month)
+        let daysLeft = isCurrentMonth ? max(1, totalDays - currentDay + 1) : totalDays
+        
+        let remaining = max(0, summary.remainingBudget)
+        return remaining / Double(daysLeft)
+    }
+    
+    private func daysRemainingInMonth() -> Int {
+        let calendar = Calendar.current
+        let range = calendar.range(of: .day, in: .month, for: viewModel.selectedMonth) ?? 1..<31
+        let totalDays = range.count
+        let currentDay = calendar.component(.day, from: Date())
+        let isCurrentMonth = calendar.isDate(viewModel.selectedMonth, equalTo: Date(), toGranularity: .month)
+        return isCurrentMonth ? max(1, totalDays - currentDay + 1) : totalDays
+    }
+    
+    private func paceDescription(for summary: BudgetSummaryResponse) -> String {
+        if summary.totalBudget <= 0 { return "No limits" }
+        if summary.overallUsagePercentage > 100 { return "Exceeded limit" }
+        if summary.overallUsagePercentage >= 90 { return "High velocity" }
+        if summary.overallUsagePercentage >= 70 { return "Moderate spend" }
+        return "Optimal burn"
+    }
+    
+    private func ringGradientColors(for percentage: Double) -> [Color] {
+        if percentage >= 100 {
+            return [FinPilotColors.error, Color(hex: "#B91C1C")]
+        } else if percentage >= 90 {
+            return [FinPilotColors.critical, Color(hex: "#C2410C")]
+        } else if percentage >= 70 {
+            return [FinPilotColors.warning, Color(hex: "#D97706")]
+        } else {
+            return [FinPilotColors.primaryLight, FinPilotColors.primary]
+        }
     }
     
     @ViewBuilder
     private func categoryListSection(summary: BudgetSummaryResponse) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Category-wise Spending")
-                .font(FinPilotTypography.title3)
-                .foregroundColor(FinPilotColors.textPrimary)
-                .padding(.horizontal, 20)
-            
-            VStack(spacing: 16) {
-                ForEach(summary.budgets) { budget in
-                    let category = viewModel.categories.first(where: { $0.id == budget.categoryId })
-                    Button(action: {
-                        selectedCategoryId = budget.categoryId
-                        setBudgetInitialMode = .focus
-                        showingSetBudget = true
-                    }) {
-                        BudgetCategoryRow(budget: budget, category: category)
-                    }
-                }
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Category Allocations")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(FinPilotColors.textPrimary)
+                
+                Spacer()
+                
+                Text("\(summary.budgets.count) \(summary.budgets.count == 1 ? "category" : "categories")")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(FinPilotColors.textSecondary)
             }
             .padding(.horizontal, 20)
+            
+            if summary.budgets.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "tag.slash")
+                        .font(.system(size: 28))
+                        .foregroundColor(FinPilotColors.textSecondary.opacity(0.5))
+                    Text("No category budgets configured yet")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(FinPilotColors.textSecondary)
+                    Text("Tap + in the top bar to set specific category limits")
+                        .font(.system(size: 12))
+                        .foregroundColor(FinPilotColors.textSecondary.opacity(0.8))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .background(FinPilotColors.surface)
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FinPilotColors.border.opacity(0.6), lineWidth: 1)
+                )
+                .padding(.horizontal, 20)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(summary.budgets) { budget in
+                        let category = viewModel.categories.first(where: { $0.id == budget.categoryId })
+                        Button(action: {
+                            selectedCategoryId = budget.categoryId
+                            setBudgetInitialMode = .focus
+                            showingSetBudget = true
+                        }) {
+                            BudgetCategoryRow(budget: budget, category: category)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
         }
     }
     
@@ -283,51 +612,81 @@ struct BudgetCategoryRow: View {
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
-                Image(systemName: category?.icon ?? "creditcard.fill")
-                    .foregroundColor(statusColor)
-                    .frame(width: 40, height: 40)
-                    .background(statusColor.opacity(0.15))
-                    .clipShape(Circle())
+                // Category Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(statusColor.opacity(0.12))
+                        .frame(width: 38, height: 38)
+                    Image(systemName: category?.icon ?? "creditcard.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(statusColor)
+                }
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(category?.name ?? "Unknown")
-                        .font(FinPilotTypography.headline)
-                        .foregroundColor(FinPilotColors.textPrimary)
-                    Text("\(String(format: "%.1f", budget.usagePercentage))% used")
-                        .font(FinPilotTypography.caption)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(category?.name ?? "General")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                        
+                        Text(String(format: "%.0f%%", abs(budget.usagePercentage)))
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(statusColor)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(statusColor.opacity(0.12))
+                            .cornerRadius(4)
+                    }
+                    
+                    Text("Budget: ₹ \(String(format: "%.0f", budget.amount))")
+                        .font(.system(size: 12))
                         .foregroundColor(FinPilotColors.textSecondary)
                 }
                 
                 Spacer()
                 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(String(format: "₹ %.0f", budget.spent))
-                        .font(FinPilotTypography.headline)
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(String(format: "₹ %.0f", abs(budget.spent)))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(FinPilotColors.textPrimary)
-                    Text(String(format: "Left ₹ %.0f", budget.remaining))
-                        .font(FinPilotTypography.caption)
-                        .foregroundColor(FinPilotColors.textSecondary)
+                    
+                    Text(budget.remaining >= 0 ? "Left ₹ \(String(format: "%.0f", budget.remaining))" : "Over by ₹ \(String(format: "%.0f", abs(budget.remaining)))")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(budget.remaining >= 0 ? FinPilotColors.textSecondary : FinPilotColors.error)
                 }
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(FinPilotColors.textSecondary.opacity(0.4))
             }
             
-            // Custom Progress Bar
+            // Refined Multi-Layer Progress Bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(FinPilotColors.background)
-                        .frame(height: 8)
+                        .fill(FinPilotColors.border.opacity(0.7))
+                        .frame(height: 7)
                     
                     Capsule()
-                        .fill(statusColor)
-                        .frame(width: max(0, min(geometry.size.width * CGFloat(budget.usagePercentage / 100.0), geometry.size.width)), height: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: [statusColor.opacity(0.8), statusColor],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: max(0, min(geometry.size.width * CGFloat(abs(budget.usagePercentage) / 100.0), geometry.size.width)), height: 7)
                 }
             }
-            .frame(height: 8)
+            .frame(height: 7)
         }
-        .padding(16)
+        .padding(14)
         .background(FinPilotColors.surface)
         .cornerRadius(16)
-        .shadow(color: .black.opacity(0.03), radius: 5, x: 0, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(FinPilotColors.border.opacity(0.7), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
     }
 }
 

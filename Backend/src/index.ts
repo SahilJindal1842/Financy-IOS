@@ -23,6 +23,10 @@ import entitlementRoutes from "./routes/entitlementRoutes";
 import db from "./db/db";
 
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+dotenv.config({ path: path.resolve(process.cwd(), "Backend/.env") });
 
 const app = express();
 const port = process.env.PORT || 3000;

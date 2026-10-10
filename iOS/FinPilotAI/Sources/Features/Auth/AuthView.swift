@@ -934,6 +934,24 @@ struct SignupStep2View: View {
                 .foregroundColor(FinPilotColors.primary)
             }
             
+            if let fallbackOtp = viewModel.receivedOtp, !fallbackOtp.isEmpty {
+                Button(action: {
+                    otp = fallbackOtp
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "key.fill")
+                            .font(.system(size: 11))
+                        Text("Auto-fill received code (\(fallbackOtp))")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(FinPilotColors.primary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(FinPilotColors.primary.opacity(0.12))
+                    .cornerRadius(8)
+                }
+            }
+            
             Button(action: {
                 viewModel.currentFlow = .signupStep1
             }) {

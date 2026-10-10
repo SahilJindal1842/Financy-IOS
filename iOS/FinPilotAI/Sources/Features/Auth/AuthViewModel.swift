@@ -22,6 +22,7 @@ final class AuthViewModel: ObservableObject {
     @Published var signupEmail = ""
     @Published var signupMobile = ""
     @Published var currentUser: User? = nil
+    @Published var receivedOtp: String? = nil
     
     // Account linking state when existing account collision occurs
     @Published var pendingLinkToken: String? = nil
@@ -187,6 +188,10 @@ final class AuthViewModel: ObservableObject {
             guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
             
             if (200...299).contains(httpResponse.statusCode) {
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let returnedOtp = json["otp"] as? String {
+                    self.receivedOtp = returnedOtp
+                }
                 self.signupEmail = trimmedEmail ?? ""
                 self.signupMobile = trimmedMobile ?? ""
                 self.currentFlow = .signupStep2
@@ -525,7 +530,10 @@ final class AuthViewModel: ObservableObject {
             guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
             
             if (200...299).contains(httpResponse.statusCode) {
-                // OTP resent successfully via email
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let returnedOtp = json["otp"] as? String {
+                    self.receivedOtp = returnedOtp
+                }
             } else {
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     self.error = (json["error"] as? String) ?? "Failed to resend code."

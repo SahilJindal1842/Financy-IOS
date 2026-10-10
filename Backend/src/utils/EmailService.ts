@@ -22,12 +22,17 @@ export class EmailService {
       return this.transporter;
     }
 
-    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASS) {
+    const gmailUser = process.env.GMAIL_USER || "sahil903433@gmail.com";
+    const gmailPass = process.env.GMAIL_APP_PASS || "pemzspqxccmjardo";
+
+    if (gmailUser && gmailPass) {
       this.transporter = nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
         auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_APP_PASS,
+          user: gmailUser,
+          pass: gmailPass,
         },
       });
       return this.transporter;
@@ -53,9 +58,8 @@ export class EmailService {
     }
 
     try {
-      const from = process.env.GMAIL_USER
-        ? `Financy <${process.env.GMAIL_USER}>`
-        : (process.env.SMTP_FROM || "Financy <no-reply@financy.app>");
+      const gmailUser = process.env.GMAIL_USER || "sahil903433@gmail.com";
+      const from = process.env.SMTP_FROM || `Financy <${gmailUser}>`;
       const mailOptions = {
         from,
         to: recipient,

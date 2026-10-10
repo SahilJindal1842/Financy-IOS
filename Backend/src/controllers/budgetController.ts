@@ -47,7 +47,7 @@ export const getBudgetSummary = async (req: AuthRequest, res: Response) => {
     const expensesByCategory: Record<string, number> = {};
     for (const exp of expenses) {
       if (exp.category_id) {
-        expensesByCategory[exp.category_id] = (expensesByCategory[exp.category_id] || 0) + Number(exp.amount);
+        expensesByCategory[exp.category_id] = (expensesByCategory[exp.category_id] || 0) + Math.abs(Number(exp.amount));
       }
     }
 
@@ -82,7 +82,7 @@ export const getBudgetSummary = async (req: AuthRequest, res: Response) => {
     const prevExpensesByCategory: Record<string, number> = {};
     for (const exp of prevExpenses) {
       if (exp.category_id) {
-        prevExpensesByCategory[exp.category_id] = (prevExpensesByCategory[exp.category_id] || 0) + Number(exp.amount);
+        prevExpensesByCategory[exp.category_id] = (prevExpensesByCategory[exp.category_id] || 0) + Math.abs(Number(exp.amount));
       }
     }
 

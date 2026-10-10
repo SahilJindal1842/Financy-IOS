@@ -28,16 +28,17 @@ struct RecurringTransactionsView: View {
                 // Pill Toggle
                 HStack(spacing: 8) {
                     ForEach(filters, id: \.self) { filter in
+                        let isSelected = selectedFilter == filter
                         Text(filter)
-                            .font(.system(size: 14, weight: selectedFilter == filter ? .semibold : .regular))
-                            .foregroundColor(selectedFilter == filter ? .white : FinPilotColors.textSecondary)
+                            .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                            .foregroundColor(isSelected ? .white : FinPilotColors.textSecondary)
                             .padding(.vertical, 8)
                             .frame(maxWidth: .infinity)
-                            .background(selectedFilter == filter ? FinPilotColors.primary : Color.white)
+                            .background(isSelected ? FinPilotColors.primary : FinPilotColors.background)
                             .cornerRadius(20)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 20)
-                                    .stroke(FinPilotColors.primary.opacity(0.3), lineWidth: selectedFilter == filter ? 0 : 1)
+                                    .stroke(isSelected ? Color.clear : FinPilotColors.border, lineWidth: 1)
                             )
                             .onTapGesture {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -49,6 +50,12 @@ struct RecurringTransactionsView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(FinPilotColors.surface)
+                .overlay(
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(FinPilotColors.divider),
+                    alignment: .bottom
+                )
                 
                 if filteredTransactions.isEmpty {
                     ScrollView {
@@ -104,6 +111,7 @@ struct RecurringTransactionsView: View {
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     .refreshable {
                         await fetchRecurring()
                     }
@@ -259,9 +267,13 @@ struct RecurringTransactionCard: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(cardColor.opacity(0.14))
+                    .background(cardColor.opacity(0.16))
                     .foregroundColor(cardColor)
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(cardColor.opacity(0.3), lineWidth: 0.8)
+                    )
                 } else {
                     HStack(spacing: 4) {
                         Image(systemName: "bell.fill")
@@ -271,9 +283,13 @@ struct RecurringTransactionCard: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.gray.opacity(0.12))
+                    .background(FinPilotColors.background)
                     .foregroundColor(FinPilotColors.textSecondary)
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(FinPilotColors.border, lineWidth: 0.8)
+                    )
                 }
                 
                 Spacer()
@@ -282,7 +298,11 @@ struct RecurringTransactionCard: View {
         .padding(16)
         .background(FinPilotColors.surface)
         .cornerRadius(16)
-        .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(FinPilotColors.border, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -509,6 +529,10 @@ struct AddRecurringTransactionView: View {
         .padding(20)
         .background(FinPilotColors.surface)
         .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(FinPilotColors.border, lineWidth: 1)
+        )
         .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
     }
     
@@ -553,6 +577,10 @@ struct AddRecurringTransactionView: View {
                 .padding(16)
                 .background(FinPilotColors.surface)
                 .cornerRadius(18)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(FinPilotColors.border, lineWidth: 1)
+                )
                 .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 3)
             } else {
                 Menu {
@@ -610,6 +638,10 @@ struct AddRecurringTransactionView: View {
                     .padding(16)
                     .background(FinPilotColors.surface)
                     .cornerRadius(18)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(FinPilotColors.border, lineWidth: 1)
+                    )
                     .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 3)
                 }
             }
@@ -640,6 +672,10 @@ struct AddRecurringTransactionView: View {
                                 .background(isSelected ? FinPilotColors.primary : FinPilotColors.background)
                                 .foregroundColor(isSelected ? .white : FinPilotColors.textPrimary)
                                 .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(isSelected ? Color.clear : FinPilotColors.border, lineWidth: 1)
+                                )
                         }
                     }
                 }
@@ -671,6 +707,10 @@ struct AddRecurringTransactionView: View {
             .padding(16)
             .background(FinPilotColors.surface)
             .cornerRadius(18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(FinPilotColors.border, lineWidth: 1)
+            )
             .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 3)
         }
     }
@@ -950,6 +990,10 @@ struct AddRecurringTransactionView: View {
             }
             .background(FinPilotColors.surface)
             .cornerRadius(18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(FinPilotColors.border, lineWidth: 1)
+            )
             .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 3)
         }
     }
@@ -975,6 +1019,10 @@ struct AddRecurringTransactionView: View {
             .padding(16)
             .background(FinPilotColors.surface)
             .cornerRadius(18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(FinPilotColors.border, lineWidth: 1)
+            )
             .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 3)
         }
     }

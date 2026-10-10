@@ -121,8 +121,12 @@ struct AuthView: View {
             }
         }
         .padding(4)
-        .background(Color.black.opacity(0.05))
+        .background(FinPilotColors.surface)
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(FinPilotColors.border, lineWidth: 1)
+        )
     }
     
     private func tabButton(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
@@ -132,9 +136,13 @@ struct AuthView: View {
                 .foregroundColor(isSelected ? FinPilotColors.primary : FinPilotColors.textSecondary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(isSelected ? Color.white : Color.clear)
+                .background(isSelected ? FinPilotColors.background : Color.clear)
                 .cornerRadius(12)
-                .shadow(color: isSelected ? Color.black.opacity(0.06) : Color.clear, radius: 4, x: 0, y: 2)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isSelected ? FinPilotColors.border : Color.clear, lineWidth: 1)
+                )
+                .shadow(color: isSelected ? Color.black.opacity(0.04) : Color.clear, radius: 4, x: 0, y: 2)
         }
     }
 }
@@ -292,12 +300,12 @@ struct ModernLoginView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .background(isSelected ? FinPilotColors.primary.opacity(0.12) : Color.white)
+            .background(isSelected ? FinPilotColors.primary.opacity(0.15) : FinPilotColors.surface)
             .foregroundColor(isSelected ? FinPilotColors.primary : FinPilotColors.textSecondary)
             .cornerRadius(10)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected ? FinPilotColors.primary : Color.black.opacity(0.08), lineWidth: 1)
+                    .stroke(isSelected ? FinPilotColors.primary : FinPilotColors.border, lineWidth: 1)
             )
         }
     }
@@ -468,12 +476,12 @@ struct ModernSignupView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .background(isSelected ? FinPilotColors.primary.opacity(0.12) : Color.white)
+            .background(isSelected ? FinPilotColors.primary.opacity(0.15) : FinPilotColors.surface)
             .foregroundColor(isSelected ? FinPilotColors.primary : FinPilotColors.textSecondary)
             .cornerRadius(10)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected ? FinPilotColors.primary : Color.black.opacity(0.08), lineWidth: 1)
+                    .stroke(isSelected ? FinPilotColors.primary : FinPilotColors.border, lineWidth: 1)
             )
         }
     }
@@ -502,7 +510,7 @@ struct SocialLoginRow: View {
             // Apple
             SocialButton(
                 title: "Apple",
-                icon: AnyView(Image(systemName: "applelogo").font(.system(size: 18)).foregroundColor(.black)),
+                icon: AnyView(Image(systemName: "applelogo").font(.system(size: 18)).foregroundColor(FinPilotColors.textPrimary)),
                 action: { onSelectProvider("Apple") }
             )
         }
@@ -524,13 +532,13 @@ struct SocialButton: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 48)
-            .background(Color.white)
+            .background(FinPilotColors.surface)
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                    .stroke(FinPilotColors.border, lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+            .shadow(color: Color.black.opacity(0.04), radius: 5, x: 0, y: 2)
         }
     }
 }
@@ -762,13 +770,13 @@ struct ModernTextField: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.white)
+        .background(FinPilotColors.surface)
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                .stroke(FinPilotColors.border, lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -804,13 +812,13 @@ struct ModernSecureField: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.white)
+        .background(FinPilotColors.surface)
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                .stroke(FinPilotColors.border, lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -850,13 +858,13 @@ struct PrimaryGradientButton: View {
 private var orDivider: some View {
     HStack(spacing: 12) {
         Rectangle()
-            .fill(Color.black.opacity(0.08))
+            .fill(FinPilotColors.divider)
             .frame(height: 1)
         Text("Or continue with")
             .font(.system(size: 12, weight: .medium, design: .rounded))
             .foregroundColor(FinPilotColors.textSecondary)
         Rectangle()
-            .fill(Color.black.opacity(0.08))
+            .fill(FinPilotColors.divider)
             .frame(height: 1)
     }
     .padding(.vertical, 4)
@@ -967,8 +975,12 @@ struct SignupStep2View: View {
             }
         }
         .padding(24)
-        .background(Color.white)
+        .background(FinPilotColors.surface)
         .cornerRadius(24)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(FinPilotColors.border, lineWidth: 1)
+        )
         .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
     }
 }
@@ -1029,8 +1041,12 @@ struct SignupStep3View: View {
             }
         }
         .padding(24)
-        .background(Color.white)
+        .background(FinPilotColors.surface)
         .cornerRadius(24)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(FinPilotColors.border, lineWidth: 1)
+        )
         .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
     }
 }

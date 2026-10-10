@@ -147,6 +147,7 @@ struct FinPilotAIApp: App {
         if CommandLine.arguments.contains("--auth-login") {
             try? KeychainManager.shared.deleteToken(for: "user_token")
             UserDefaults.standard.removeObject(forKey: "user_token")
+            vm.logout()
             UserDefaults.standard.set(true, forKey: "hasSeenSplashScreen")
             vm.currentFlow = .login
         }

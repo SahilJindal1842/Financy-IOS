@@ -1,18 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
   --color-primary: #10B981;
   --color-primary-dark: #059669;
   --color-primary-light: #34D399;
   --color-primary-glow: rgba(16, 185, 129, 0.25);
-  --color-bg-dark: #070B14;
-  --color-bg-card: rgba(15, 23, 42, 0.7);
+  --color-bg-dark: #060A12;
+  --color-bg-card: rgba(13, 20, 36, 0.7);
   --color-border: rgba(255, 255, 255, 0.08);
 }
 
 html.light {
   --color-bg-dark: #F8FAFC;
-  --color-bg-card: rgba(255, 255, 255, 0.85);
+  --color-bg-card: rgba(255, 255, 255, 0.9);
   --color-border: rgba(0, 0, 0, 0.08);
   color-scheme: light;
 }
@@ -23,13 +23,13 @@ html.light body {
 }
 
 html.light .glass-panel {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
 }
 
 html.light .glass-nav {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -37,6 +37,7 @@ html.light .text-white {
   color: #0F172A !important;
 }
 
+html.light .text-slate-200,
 html.light .text-slate-300 {
   color: #334155 !important;
 }
@@ -46,14 +47,22 @@ html.light .text-slate-400 {
 }
 
 html.light .bg-slate-900\/80,
+html.light .bg-slate-900\/70,
+html.light .bg-slate-900\/60,
 html.light .bg-slate-950\/40,
 html.light .bg-slate-950\/30,
 html.light .bg-slate-950\/20 {
-  background-color: rgba(241, 245, 249, 0.8) !important;
+  background-color: rgba(241, 245, 249, 0.85) !important;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
 }
 
 body {
@@ -61,12 +70,32 @@ body {
   background-color: var(--color-bg-dark);
   color: #F8FAFC;
   overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+  position: relative;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, .brand-font {
   font-family: 'Outfit', sans-serif;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+.no-wrap {
+  white-space: nowrap;
 }
 
 /* Custom Scrollbar */
@@ -74,7 +103,7 @@ h1, h2, h3, h4, .brand-font {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #070B14;
+  background: #060A12;
 }
 ::-webkit-scrollbar-thumb {
   background: #1E293B;
@@ -86,16 +115,16 @@ h1, h2, h3, h4, .brand-font {
 
 /* Glassmorphism Classes */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(13, 20, 36, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-nav {
-  background: rgba(7, 11, 20, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(6, 10, 18, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -104,26 +133,26 @@ h1, h2, h3, h4, .brand-font {
 }
 .glass-card-hover:hover {
   transform: translateY(-4px);
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 20px 40px -15px rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 20px 40px -15px rgba(16, 185, 129, 0.18);
 }
 
 /* Radial Glows */
 .bg-glow-emerald {
-  background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.16) 0%, rgba(16, 185, 129, 0) 70%);
 }
 
 .bg-glow-indigo {
-  background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.14) 0%, rgba(99, 102, 241, 0) 70%);
 }
 
 .bg-glow-sky {
-  background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.14) 0%, rgba(14, 165, 233, 0) 70%);
 }
 
 /* Text Gradients */
 .text-gradient-emerald {
-  background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
+  background: linear-gradient(135deg, #4ADE80 0%, #10B981 50%, #059669 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -137,7 +166,8 @@ h1, h2, h3, h4, .brand-font {
 /* Realistic iPhone 16 Pro Frame */
 .iphone-frame {
   position: relative;
-  width: 320px;
+  width: min(320px, calc(100vw - 48px));
+  max-width: 100%;
   height: 650px;
   border-radius: 54px;
   background: #18191D;
@@ -145,16 +175,22 @@ h1, h2, h3, h4, .brand-font {
   box-shadow: 
     0 0 0 2px #383A42,
     0 0 0 4px #1E2024,
-    0 25px 60px -15px rgba(0, 0, 0, 0.9),
-    0 0 40px 0 rgba(16, 185, 129, 0.12);
-  transform: perspective(1000px) rotateY(-3deg) rotateX(2deg);
+    0 25px 60px -15px rgba(0, 0, 0, 0.95),
+    0 0 40px 0 rgba(16, 185, 129, 0.15);
+  transform: perspective(1000px) rotateY(-2deg) rotateX(1deg);
   transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+}
+
+@media (max-width: 640px) {
+  .iphone-frame {
+    transform: none !important;
+  }
 }
 
 @media (min-width: 1024px) {
   .iphone-frame {
-    width: 340px;
-    height: 690px;
+    width: 335px;
+    height: 685px;
   }
 }
 
@@ -163,8 +199,8 @@ h1, h2, h3, h4, .brand-font {
   box-shadow: 
     0 0 0 2px #4ADE80,
     0 0 0 5px #1E2024,
-    0 35px 80px -20px rgba(0, 0, 0, 0.95),
-    0 0 60px 0 rgba(16, 185, 129, 0.25);
+    0 35px 80px -20px rgba(0, 0, 0, 0.98),
+    0 0 60px 0 rgba(16, 185, 129, 0.28);
 }
 
 .iphone-screen {
@@ -367,32 +403,33 @@ h1, h2, h3, h4, .brand-font {
 /* Floating Metric Badges */
 .floating-badge {
   position: absolute;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 10px 16px;
-  box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.6);
+  background: rgba(13, 20, 36, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  padding: 11px 18px;
+  box-shadow: 0 15px 35px -8px rgba(0, 0, 0, 0.7);
   z-index: 30;
+  white-space: nowrap;
   animation: float 4s ease-in-out infinite;
 }
 
 .floating-badge-1 {
-  top: 15%;
-  left: -48px;
+  top: 16%;
+  left: -52px;
   animation-delay: 0s;
 }
 
 .floating-badge-2 {
-  bottom: 22%;
-  right: -52px;
+  bottom: 24%;
+  right: -56px;
   animation-delay: 1.8s;
 }
 
 .floating-badge-3 {
-  bottom: 6%;
-  left: -36px;
+  bottom: 8%;
+  left: -40px;
   animation-delay: 3s;
 }
 
@@ -412,6 +449,7 @@ h1, h2, h3, h4, .brand-font {
   border-radius: 50%;
   background: #10B981;
   position: relative;
+  flex-shrink: 0;
 }
 .pulse-dot::before {
   content: '';
@@ -442,13 +480,15 @@ h1, h2, h3, h4, .brand-font {
 .app-store-btn {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: #000000;
   color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 14px;
-  padding: 10px 22px;
+  padding: 10px 20px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.25s ease;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
   text-decoration: none;
@@ -488,14 +528,15 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 /* Tab indicator */
 .screen-tab.active {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.5);
   color: #34D399;
 }
 
 /* Interactive Chips */
 .tag-chip {
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 .tag-chip:hover {

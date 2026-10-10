@@ -53,7 +53,9 @@ export class EmailService {
     }
 
     try {
-      const from = process.env.SMTP_FROM || process.env.GMAIL_USER || "Financy <no-reply@financy.app>";
+      const from = process.env.GMAIL_USER
+        ? `Financy <${process.env.GMAIL_USER}>`
+        : (process.env.SMTP_FROM || "Financy <no-reply@financy.app>");
       const mailOptions = {
         from,
         to: recipient,

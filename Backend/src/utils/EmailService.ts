@@ -36,7 +36,7 @@ export class EmailService {
     return null;
   }
 
-  static async sendOTP(recipient: string, otp: string) {
+  static async sendOTP(recipient: string, otp: string): Promise<boolean> {
     const transporter = this.getTransporter();
 
     console.log(`\n========================================`);
@@ -46,10 +46,10 @@ export class EmailService {
     if (!transporter) {
       if (SupabaseService.isConfigured()) {
         const sent = await SupabaseService.sendOtpEmail(recipient);
-        if (sent) return;
+        if (sent) return true;
       }
       console.log(`[EmailService] Notice: SMTP / Supabase Auth not configured in .env. To send real emails to ${recipient}, set SMTP_HOST/USER/PASS, GMAIL_USER/GMAIL_APP_PASS, or SUPABASE_ANON_KEY in Backend/.env.`);
-      return Promise.resolve();
+      return false;
     }
 
     try {
@@ -77,8 +77,10 @@ export class EmailService {
 
       const info = await transporter.sendMail(mailOptions);
       console.log(`[EmailService] Email dispatched successfully to ${recipient}. MessageId: ${info.messageId}`);
+      return true;
     } catch (error) {
       console.error(`[EmailService] Failed to send email to ${recipient}:`, error);
+      return false;
     }
   }
 }

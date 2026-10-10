@@ -39,11 +39,13 @@ export const signup = async (req: Request, res: Response) => {
         });
 
         console.log(`\n========================================\n>>> SIGNUP OTP: ${otp} for ${email || mobile_number}\n========================================\n`);
-        await EmailService.sendOTP(email || mobile_number, otp);
+        const emailSent = await EmailService.sendOTP(email || mobile_number, otp);
 
         return res.status(200).json({
-          message: "Account pending verification. New OTP sent.",
-          otp: process.env.NODE_ENV !== "production" ? otp : undefined
+          message: emailSent
+            ? "Account pending verification. OTP sent."
+            : "Account pending verification. Enter the 6-digit code to continue.",
+          otp: (!emailSent || process.env.NODE_ENV !== "production") ? otp : undefined
         });
       }
       return res.status(400).json({ error: "User already exists" });
@@ -71,11 +73,13 @@ export const signup = async (req: Request, res: Response) => {
     });
 
     console.log(`\n========================================\n>>> SIGNUP OTP: ${otp} for ${email || mobile_number}\n========================================\n`);
-    await EmailService.sendOTP(email || mobile_number, otp);
+    const emailSent = await EmailService.sendOTP(email || mobile_number, otp);
 
-    res.status(201).json({
-      message: "User registered successfully. OTP sent for verification.",
-      otp: process.env.NODE_ENV !== "production" ? otp : undefined
+    return res.status(201).json({
+      message: emailSent
+        ? "User registered successfully. OTP sent for verification."
+        : "User registered successfully. Enter the 6-digit code to continue.",
+      otp: (!emailSent || process.env.NODE_ENV !== "production") ? otp : undefined
     });
   } catch (error) {
     console.error(error);
@@ -220,9 +224,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
       expires_at: expiresAt,
     });
 
-    await EmailService.sendOTP(email || mobile_number, otp);
+    const emailSent = await EmailService.sendOTP(email || mobile_number, otp);
 
-    res.json({ message: "Password reset OTP sent" });
+    return res.json({
+      message: emailSent ? "Password reset OTP sent" : "Password reset OTP generated",
+      otp: (!emailSent || process.env.NODE_ENV !== "production") ? otp : undefined
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

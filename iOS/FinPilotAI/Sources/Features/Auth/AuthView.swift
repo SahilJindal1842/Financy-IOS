@@ -83,6 +83,10 @@ struct AuthView: View {
             }
         }
         .loadingOverlay(isLoading: viewModel.isLoading, message: "Please wait...")
+        .sheet(isPresented: $viewModel.showLinkAccountSheet) {
+            LinkAccountSheetView()
+                .environmentObject(viewModel)
+        }
     }
     
     private var headerView: some View {
@@ -1252,3 +1256,66 @@ struct SplashView: View {
         }
     }
 }
+
+// MARK: - Account Linking Modal Sheet
+struct LinkAccountSheetView: View {
+    @EnvironmentObject var viewModel: AuthViewModel
+    @State private var password = ""
+    @State private var showPassword = false
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "link.badge.plus")
+                    .font(.system(size: 48))
+                    .foregroundColor(FinPilotColors.primary)
+                    .padding(.top, 24)
+                
+                Text("Link Existing Account")
+                    .font(FinPilotTypography.title2)
+                    .foregroundColor(FinPilotColors.textPrimary)
+                
+                Text("An existing Financy account was found for \(viewModel.pendingLinkEmail ?? ""). Enter your password to verify ownership and securely link your \(viewModel.pendingLinkProvider ?? "social") account.")
+                    .font(FinPilotTypography.subheadline)
+                    .foregroundColor(FinPilotColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+                
+                ModernSecureField(
+                    icon: "lock.fill",
+                    placeholder: "Enter Account Password",
+                    text: $password,
+                    showPassword: $showPassword
+                )
+                .padding(.horizontal, 16)
+                
+                if let err = viewModel.error {
+                    Text(err)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.red)
+                        .padding(.horizontal, 16)
+                }
+                
+                PrimaryGradientButton(title: "Verify & Link Account", isLoading: viewModel.isLoading) {
+                    Task {
+                        await viewModel.submitLinkAccount(password: password)
+                    }
+                }
+                .disabled(password.isEmpty)
+                .padding(.horizontal, 16)
+                
+                Spacer()
+            }
+            .padding(.top, 10)
+            .background(FinPilotColors.background)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        viewModel.showLinkAccountSheet = false
+                    }
+                }
+            }
+        }
+    }
+}
+

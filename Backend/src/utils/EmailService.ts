@@ -1,4 +1,5 @@
 import nodemailer, { Transporter } from "nodemailer";
+import { SupabaseService } from "./SupabaseService";
 
 export class EmailService {
   private static transporter: Transporter | null = null;
@@ -43,7 +44,11 @@ export class EmailService {
     console.log(`========================================\n`);
 
     if (!transporter) {
-      console.log(`[EmailService] Notice: SMTP not configured in .env. To send real emails to ${recipient}, set SMTP_HOST/USER/PASS or GMAIL_USER/GMAIL_APP_PASS in Backend/.env.`);
+      if (SupabaseService.isConfigured()) {
+        const sent = await SupabaseService.sendOtpEmail(recipient);
+        if (sent) return;
+      }
+      console.log(`[EmailService] Notice: SMTP / Supabase Auth not configured in .env. To send real emails to ${recipient}, set SMTP_HOST/USER/PASS, GMAIL_USER/GMAIL_APP_PASS, or SUPABASE_ANON_KEY in Backend/.env.`);
       return Promise.resolve();
     }
 

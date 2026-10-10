@@ -2,6 +2,7 @@ import SwiftUI
 import Foundation
 import FirebaseAuth
 import AuthenticationServices
+import GoogleSignIn
 
 @MainActor
 final class AuthViewModel: ObservableObject {
@@ -22,6 +23,12 @@ final class AuthViewModel: ObservableObject {
     @Published var signupEmail = ""
     @Published var signupMobile = ""
     @Published var currentUser: User? = nil
+    
+    // Account linking state when existing account collision occurs
+    @Published var pendingLinkToken: String? = nil
+    @Published var pendingLinkEmail: String? = nil
+    @Published var pendingLinkProvider: String? = nil
+    @Published var showLinkAccountSheet = false
     
     // Internal user states as requested
     enum UserState: String {
@@ -154,38 +161,7 @@ final class AuthViewModel: ObservableObject {
         let trimmedEmail = email?.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedMobile = mobile?.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // 1. Try Firebase Authentication Sign-up if email is provided
-        if let userEmail = trimmedEmail, !userEmail.isEmpty {
-            do {
-                let authResult = try await Auth.auth().createUser(withEmail: userEmail, password: password)
-                let changeRequest = authResult.user.createProfileChangeRequest()
-                changeRequest.displayName = fullName
-                try? await changeRequest.commitChanges()
-                
-                let backendSuccess = await firebaseBackendLogin(
-                    firebaseUid: authResult.user.uid,
-                    email: userEmail,
-                    name: fullName
-                )
-                if backendSuccess {
-                    self.signupEmail = userEmail
-                    self.signupMobile = trimmedMobile ?? ""
-                    self.currentFlow = .signupStep3
-                    isLoading = false
-                    return
-                }
-            } catch {
-                print("Firebase createUser note: \(error.localizedDescription)")
-                let msg = error.localizedDescription
-                if msg.localizedCaseInsensitiveContains("already in use") {
-                    self.error = "This email is already in use. Please log in instead."
-                    isLoading = false
-                    return
-                }
-            }
-        }
-        
-        // 2. Fallback to standard backend OTP signup
+        // Standard backend signup: generates OTP and dispatches to email via Supabase/SMTP
         do {
             guard let url = URL(string: "\(baseURL)/signup") else { throw URLError(.badURL) }
             var request = URLRequest(url: url)
@@ -571,6 +547,7 @@ final class AuthViewModel: ObservableObject {
         isLoading = false
     }
 
+    // MARK: - Social Authentication Actions
     func startSocialAuth(provider: String) {
         let normalized = provider.lowercased()
         isLoading = true
@@ -578,31 +555,169 @@ final class AuthViewModel: ObservableObject {
         
         Task {
             if normalized.contains("apple") {
-                do {
-                    let (email, name) = try await SocialAuthManager.shared.signInWithApple()
-                    await self.socialLogin(provider: "apple", email: email, name: name)
-                } catch {
-                    self.isLoading = false
-                    let nsErr = error as NSError
-                    if nsErr.domain == ASAuthorizationErrorDomain && nsErr.code == ASAuthorizationError.canceled.rawValue {
-                        return
-                    }
-                    self.error = "Apple Sign In: \(error.localizedDescription)"
-                }
-            } else {
-                do {
-                    let (email, name) = try await SocialAuthManager.shared.signInWithWebOAuth(provider: normalized)
-                    await self.socialLogin(provider: normalized, email: email, name: name)
-                } catch {
-                    self.isLoading = false
-                    let nsErr = error as NSError
-                    if nsErr.domain == ASWebAuthenticationSessionErrorDomain && nsErr.code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
-                        return
-                    }
-                    self.error = "\(provider) Sign In: \(error.localizedDescription)"
-                }
+                await self.authenticateWithApple()
+            } else if normalized.contains("google") {
+                await self.authenticateWithGoogle()
+            } else if normalized.contains("facebook") {
+                await self.authenticateWithFacebook()
             }
         }
+    }
+    
+    func authenticateWithApple() async {
+        isLoading = true
+        error = nil
+        do {
+            let creds = try await SocialAuthManager.shared.signInWithApple()
+            var payload: [String: Any] = [
+                "identityToken": creds.identityToken,
+                "userIdentifier": creds.userIdentifier
+            ]
+            if let fullName = creds.fullName {
+                payload["fullName"] = fullName
+            }
+            if let email = creds.email {
+                payload["email"] = email
+            }
+            await self.sendSocialAuthRequest(endpoint: "/apple", payload: payload, providerName: "Apple")
+        } catch {
+            isLoading = false
+            let nsErr = error as NSError
+            if nsErr.domain == ASAuthorizationErrorDomain && nsErr.code == ASAuthorizationError.canceled.rawValue {
+                return
+            }
+            self.error = "Apple Sign In: \(error.localizedDescription)"
+        }
+    }
+    
+    func authenticateWithGoogle() async {
+        isLoading = true
+        error = nil
+        do {
+            let idToken = try await SocialAuthManager.shared.signInWithGoogle()
+            let payload: [String: Any] = ["idToken": idToken]
+            await self.sendSocialAuthRequest(endpoint: "/google", payload: payload, providerName: "Google")
+        } catch {
+            isLoading = false
+            let nsErr = error as NSError
+            if nsErr.domain == "com.google.GIDSignIn" && nsErr.code == -5 {
+                return
+            }
+            self.error = "Google Sign In: \(error.localizedDescription)"
+        }
+    }
+    
+    func authenticateWithFacebook() async {
+        isLoading = true
+        error = nil
+        do {
+            let accessToken = try await SocialAuthManager.shared.signInWithFacebook()
+            let payload: [String: Any] = ["accessToken": accessToken]
+            await self.sendSocialAuthRequest(endpoint: "/facebook", payload: payload, providerName: "Facebook")
+        } catch {
+            isLoading = false
+            let nsErr = error as NSError
+            if nsErr.domain == ASWebAuthenticationSessionErrorDomain && nsErr.code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+                return
+            }
+            self.error = "Facebook Sign In: \(error.localizedDescription)"
+        }
+    }
+    
+    private func sendSocialAuthRequest(endpoint: String, payload: [String: Any], providerName: String) async {
+        do {
+            guard let url = URL(string: "\(baseURL)\(endpoint)") else { throw URLError(.badURL) }
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.timeoutInterval = 60
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+            
+            if (200...299).contains(httpResponse.statusCode) {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let token = json["token"] as? String {
+                    try KeychainManager.shared.save(token: token, for: "user_token")
+                    UserDefaults.standard.set(0, forKey: "selectedMainTab")
+                    NotificationCenter.default.post(name: .navigateToTab, object: 0)
+                    await fetchProfile()
+                    await EntitlementManager.shared.checkEntitlement()
+                    self.isAuthenticated = true
+                } else {
+                    self.error = "Invalid response format from server."
+                }
+            } else if httpResponse.statusCode == 409 {
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let linkToken = json["linkToken"] as? String {
+                    self.pendingLinkToken = linkToken
+                    self.pendingLinkEmail = json["email"] as? String
+                    self.pendingLinkProvider = json["provider"] as? String ?? providerName
+                    self.showLinkAccountSheet = true
+                } else {
+                    self.error = "An account with this email already exists."
+                }
+            } else {
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    self.error = (json["error"] as? String) ?? (json["message"] as? String) ?? "\(providerName) sign in failed."
+                } else {
+                    self.error = "\(providerName) sign in failed."
+                }
+            }
+        } catch {
+            self.error = "Network Error: \(error.localizedDescription)"
+        }
+        isLoading = false
+    }
+    
+    func submitLinkAccount(password: String) async {
+        guard let linkToken = pendingLinkToken else { return }
+        isLoading = true
+        error = nil
+        do {
+            guard let url = URL(string: "\(baseURL)/link-account") else { throw URLError(.badURL) }
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.timeoutInterval = 60
+            
+            let payload: [String: String] = [
+                "linkToken": linkToken,
+                "password": password
+            ]
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+            
+            if (200...299).contains(httpResponse.statusCode) {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let token = json["token"] as? String {
+                    try KeychainManager.shared.save(token: token, for: "user_token")
+                    self.pendingLinkToken = nil
+                    self.pendingLinkEmail = nil
+                    self.pendingLinkProvider = nil
+                    self.showLinkAccountSheet = false
+                    UserDefaults.standard.set(0, forKey: "selectedMainTab")
+                    NotificationCenter.default.post(name: .navigateToTab, object: 0)
+                    await fetchProfile()
+                    await EntitlementManager.shared.checkEntitlement()
+                    self.isAuthenticated = true
+                } else {
+                    self.error = "Invalid server response."
+                }
+            } else {
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    self.error = (json["error"] as? String) ?? (json["message"] as? String) ?? "Password verification failed."
+                } else {
+                    self.error = "Password verification failed."
+                }
+            }
+        } catch {
+            self.error = "Network Error: \(error.localizedDescription)"
+        }
+        isLoading = false
     }
     
     func checkAuthStatus() {
@@ -618,13 +733,20 @@ final class AuthViewModel: ObservableObject {
     }
 }
 
-// MARK: - Native & Web Social Authentication Manager
+// MARK: - Native Social Authentication Manager
+struct AppleCredentials {
+    let identityToken: String
+    let userIdentifier: String
+    let fullName: [String: String]?
+    let email: String?
+}
+
 @MainActor
 final class SocialAuthManager: NSObject, ASWebAuthenticationPresentationContextProviding, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     static let shared = SocialAuthManager()
     
     private var webAuthSession: ASWebAuthenticationSession?
-    private var appleCompletion: ((Result<(String, String), Error>) -> Void)?
+    private var appleCompletion: ((Result<AppleCredentials, Error>) -> Void)?
     
     nonisolated func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         if Thread.isMainThread {
@@ -649,7 +771,7 @@ final class SocialAuthManager: NSObject, ASWebAuthenticationPresentationContextP
     }
     
     // MARK: - Sign in with Apple
-    func signInWithApple() async throws -> (String, String) {
+    func signInWithApple() async throws -> AppleCredentials {
         return try await withCheckedThrowingContinuation { continuation in
             let provider = ASAuthorizationAppleIDProvider()
             let request = provider.createRequest()
@@ -668,12 +790,28 @@ final class SocialAuthManager: NSObject, ASWebAuthenticationPresentationContextP
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         if let cred = authorization.credential as? ASAuthorizationAppleIDCredential {
-            let email = cred.email ?? "apple_user_\(cred.user.prefix(6))@privaterelay.appleid.com"
-            let first = cred.fullName?.givenName ?? ""
-            let last = cred.fullName?.familyName ?? ""
-            let name = "\(first) \(last)".trimmingCharacters(in: .whitespaces)
-            let finalName = name.isEmpty ? "Apple User" : name
-            appleCompletion?(.success((email, finalName)))
+            guard let tokenData = cred.identityToken,
+                  let identityToken = String(data: tokenData, encoding: .utf8) else {
+                appleCompletion?(.failure(NSError(domain: "AppleAuth", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to read Apple identity token"])))
+                appleCompletion = nil
+                return
+            }
+            
+            var nameDict: [String: String]? = nil
+            if let fullName = cred.fullName {
+                var dict: [String: String] = [:]
+                if let given = fullName.givenName { dict["givenName"] = given }
+                if let family = fullName.familyName { dict["familyName"] = family }
+                if !dict.isEmpty { nameDict = dict }
+            }
+            
+            let credentials = AppleCredentials(
+                identityToken: identityToken,
+                userIdentifier: cred.user,
+                fullName: nameDict,
+                email: cred.email
+            )
+            appleCompletion?(.success(credentials))
         } else {
             appleCompletion?(.failure(NSError(domain: "AppleAuth", code: -1, userInfo: [NSLocalizedDescriptionKey: "Apple Sign-in failed"])))
         }
@@ -685,22 +823,29 @@ final class SocialAuthManager: NSObject, ASWebAuthenticationPresentationContextP
         appleCompletion = nil
     }
     
-    // MARK: - Sign in with Google / Facebook via Web Redirection
-    func signInWithWebOAuth(provider: String) async throws -> (String, String) {
-        let normalized = provider.lowercased()
-        let authURL: URL
-        let callbackScheme = "financy"
+    // MARK: - Sign in with Google (Official GoogleSignIn SDK)
+    func signInWithGoogle() async throws -> String {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? windowScene.windows.first?.rootViewController else {
+            throw NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active view controller found for Google Sign In"])
+        }
         
-        if normalized.contains("google") {
-            let redirectURI = "financy://oauth-callback"
-            let encodedRedirect = redirectURI.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? redirectURI
-            let urlString = "https://accounts.google.com/o/oauth2/v2/auth?client_id=427668842020-ios.apps.googleusercontent.com&redirect_uri=\(encodedRedirect)&response_type=token%20id_token&scope=email%20profile%20openid&prompt=select_account"
-            authURL = URL(string: urlString) ?? URL(string: "https://accounts.google.com")!
-        } else {
-            let redirectURI = "financy://oauth-callback"
-            let encodedRedirect = redirectURI.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? redirectURI
-            let urlString = "https://www.facebook.com/v19.0/dialog/oauth?client_id=1067204895180000&redirect_uri=\(encodedRedirect)&response_type=token&scope=email,public_profile"
-            authURL = URL(string: urlString) ?? URL(string: "https://m.facebook.com")!
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController)
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw NSError(domain: "GoogleSignIn", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to extract Google ID token"])
+        }
+        return idToken
+    }
+    
+    // MARK: - Sign in with Facebook (Secure Meta OAuth Dialog)
+    func signInWithFacebook() async throws -> String {
+        let callbackScheme = "financy"
+        let redirectURI = "financy://oauth-callback"
+        let encodedRedirect = redirectURI.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? redirectURI
+        let fbAppId = "1067204895180000" // Financy Meta App ID
+        let urlString = "https://www.facebook.com/v19.0/dialog/oauth?client_id=\(fbAppId)&redirect_uri=\(encodedRedirect)&response_type=token&scope=email,public_profile"
+        guard let authURL = URL(string: urlString) else {
+            throw NSError(domain: "FacebookAuth", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid Facebook auth URL"])
         }
         
         return try await withCheckedThrowingContinuation { continuation in
@@ -710,17 +855,32 @@ final class SocialAuthManager: NSObject, ASWebAuthenticationPresentationContextP
                     return
                 }
                 
-                var email: String? = nil
-                var name: String? = nil
-                if let callback = callbackURL, let comps = URLComponents(url: callback, resolvingAgainstBaseURL: false) {
-                    email = comps.queryItems?.first(where: { $0.name == "email" })?.value
-                    name = comps.queryItems?.first(where: { $0.name == "name" })?.value
+                guard let callback = callbackURL else {
+                    continuation.resume(throwing: NSError(domain: "FacebookAuth", code: -2, userInfo: [NSLocalizedDescriptionKey: "No callback received"]))
+                    return
                 }
                 
-                let defaultName = normalized.contains("google") ? "Google User" : "Facebook User"
-                let defaultEmail = normalized.contains("google") ? "google_user@gmail.com" : "facebook_user@facebook.com"
+                var token: String? = nil
+                if let fragment = callback.fragment {
+                    let items = fragment.components(separatedBy: "&")
+                    for item in items {
+                        let pair = item.components(separatedBy: "=")
+                        if pair.count == 2 && pair[0] == "access_token" {
+                            token = pair[1]
+                            break
+                        }
+                    }
+                }
                 
-                continuation.resume(returning: (email ?? defaultEmail, name ?? defaultName))
+                if token == nil, let comps = URLComponents(url: callback, resolvingAgainstBaseURL: false) {
+                    token = comps.queryItems?.first(where: { $0.name == "access_token" })?.value
+                }
+                
+                if let validToken = token, !validToken.isEmpty {
+                    continuation.resume(returning: validToken)
+                } else {
+                    continuation.resume(throwing: NSError(domain: "FacebookAuth", code: -3, userInfo: [NSLocalizedDescriptionKey: "Failed to extract Facebook access token"]))
+                }
             }
             session.presentationContextProvider = self
             session.prefersEphemeralWebBrowserSession = false

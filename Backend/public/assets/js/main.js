@@ -542,15 +542,15 @@ function setupLifetimeRoiCalculator() {
     const years = parseInt(yearsSlider.value) || 3;
     if (yearsDisplay) yearsDisplay.textContent = `${years} ${years === 1 ? "Year" : "Years"}`;
 
-    // Competitors: $9.99/mo = ~₹820/mo = ₹9,840/year
-    const competitorCost = years * 9840;
-    // Financy Lifetime: one-time ₹1,999
-    const financyCost = 1999;
+    // Competitors: $9.99/mo = $119.88/year
+    const competitorCost = years * 119.88;
+    // Financy Lifetime: one-time $9.99 only after trial
+    const financyCost = 9.99;
     const savings = Math.max(0, competitorCost - financyCost);
 
-    if (competitorDisplay) competitorDisplay.textContent = `₹ ${competitorCost.toLocaleString("en-IN")}`;
-    if (financyDisplay) financyDisplay.textContent = `₹ ${financyCost.toLocaleString("en-IN")} (One-time)`;
-    if (savingsDisplay) savingsDisplay.textContent = `₹ ${savings.toLocaleString("en-IN")} Saved!`;
+    if (competitorDisplay) competitorDisplay.textContent = `$${competitorCost.toFixed(2)}`;
+    if (financyDisplay) financyDisplay.textContent = `$${financyCost.toFixed(2)} (Once)`;
+    if (savingsDisplay) savingsDisplay.textContent = `$${savings.toFixed(2)} Saved!`;
   }
 
   yearsSlider.addEventListener("input", () => {

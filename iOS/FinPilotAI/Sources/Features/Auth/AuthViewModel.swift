@@ -9,7 +9,6 @@ final class AuthViewModel: ObservableObject {
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var error: String?
-    @Published var devOTP: String? = nil
     
     // Auth States for the UI flow
     enum AuthFlow {
@@ -190,12 +189,6 @@ final class AuthViewModel: ObservableObject {
             if (200...299).contains(httpResponse.statusCode) {
                 self.signupEmail = trimmedEmail ?? ""
                 self.signupMobile = trimmedMobile ?? ""
-                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let otpCode = json["otp"] as? String {
-                    self.devOTP = otpCode
-                } else {
-                    self.devOTP = nil
-                }
                 self.currentFlow = .signupStep2
             } else {
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
@@ -532,10 +525,7 @@ final class AuthViewModel: ObservableObject {
             guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
             
             if (200...299).contains(httpResponse.statusCode) {
-                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let code = json["otp"] as? String {
-                    self.devOTP = code
-                }
+                // OTP resent successfully via email
             } else {
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     self.error = (json["error"] as? String) ?? "Failed to resend code."

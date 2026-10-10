@@ -903,42 +903,6 @@ struct SignupStep2View: View {
                     .multilineTextAlignment(.center)
             }
             
-            // Dev Mode OTP Banner (for instant testing or before SMTP is set)
-            if let devCode = viewModel.devOTP, !devCode.isEmpty {
-                VStack(spacing: 6) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark.seal.fill")
-                            .foregroundColor(FinPilotColors.primary)
-                        Text("Code: \(devCode)")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundColor(FinPilotColors.primary)
-                        Spacer()
-                        Button(action: {
-                            self.otp = devCode
-                        }) {
-                            Text("Autofill")
-                                .font(.system(size: 12, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(FinPilotColors.primary)
-                                .cornerRadius(8)
-                        }
-                    }
-                    Text("Also dispatched to your email (check inbox/spam).")
-                        .font(.system(size: 11))
-                        .foregroundColor(FinPilotColors.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .padding(12)
-                .background(FinPilotColors.primary.opacity(0.08))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(FinPilotColors.primary.opacity(0.2), lineWidth: 1)
-                )
-            }
-            
             // OTP Input
             ModernTextField(
                 icon: "number.square.fill",

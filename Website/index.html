@@ -335,6 +335,22 @@
 
               </div>
 
+              <!-- Interactive Simulator Action Bar (Directly In Front of Emulator Screen) -->
+              <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 z-40 relative">
+                <button class="trigger-splash-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40 shadow-lg shadow-emerald-500/10 transition-all active:scale-95 no-wrap w-full sm:w-auto cursor-pointer">
+                  <i data-lucide="play" class="w-3.5 h-3.5 fill-current text-emerald-400"></i>
+                  <span>Replay Animated Splash Screen</span>
+                </button>
+                <button class="trigger-add-tx-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/40 shadow-lg shadow-sky-500/10 transition-all active:scale-95 no-wrap w-full sm:w-auto cursor-pointer">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-sky-400"></i>
+                  <span>Test Quick Add Expense Sheet</span>
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400 text-center mt-2.5 flex items-center justify-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Tap Dynamic Island or tabs inside screen to interact live</span>
+              </p>
+
             </div>
           </div>
 
@@ -352,75 +368,180 @@
             Explore All 6 Core Modules of the iOS App
           </h2>
           <p class="text-slate-400 text-base sm:text-lg text-pretty">
-            Tap the tabs below or use the controls to experience Financy’s native SwiftUI screens, Dynamic Island activities, and animated splash startup.
+            Tap the tabs below or use the controls directly in front of the emulator to experience Financy’s native SwiftUI screens, Dynamic Island activities, and animated splash startup.
           </p>
         </div>
 
-        <!-- Simulator Action Bar -->
-        <div class="flex flex-wrap items-center justify-center gap-3 max-w-3xl mx-auto mb-8">
-          <button id="trigger-splash-btn" class="px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 transition-all flex items-center gap-2 no-wrap">
-            <i data-lucide="play" class="w-4 h-4 fill-current"></i>
-            <span>Replay Animated Splash Screen</span>
-          </button>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           
-          <button id="trigger-add-tx-btn" class="px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-sky-500/15 text-sky-300 hover:bg-sky-500/25 border border-sky-500/30 transition-all flex items-center gap-2 no-wrap">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            <span>Test Quick Add Expense Sheet</span>
-          </button>
-        </div>
+          <!-- Left Column: Module Switcher & Explainer (7 cols) -->
+          <div class="lg:col-span-7 space-y-6">
+            <!-- Screen Switcher Tabs Grid -->
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button class="screen-tab active px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border transition-all flex items-center gap-2 no-wrap" data-screen="budget">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-400"></i>
+                <span>Budget Burn Ring</span>
+              </button>
 
-        <!-- Screen Switcher Tabs Grid -->
-        <div class="flex flex-wrap items-center justify-center gap-2.5 max-w-4xl mx-auto mb-12">
-          <button class="screen-tab active px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border transition-all flex items-center gap-2 no-wrap" data-screen="budget">
-            <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-400"></i>
-            <span>Budget Burn Ring</span>
-          </button>
+              <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="home">
+                <i data-lucide="home" class="w-4 h-4 text-emerald-400"></i>
+                <span>Net Worth & Home</span>
+              </button>
 
-          <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="home">
-            <i data-lucide="home" class="w-4 h-4 text-emerald-400"></i>
-            <span>Net Worth & Home</span>
-          </button>
+              <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="transactions">
+                <i data-lucide="list" class="w-4 h-4 text-sky-400"></i>
+                <span>Transaction Ledger</span>
+              </button>
+              
+              <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="recurring">
+                <i data-lucide="repeat" class="w-4 h-4 text-amber-400"></i>
+                <span>Subscription Radar</span>
+              </button>
+              
+              <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="settings">
+                <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
+                <span>Settings & Entitlement</span>
+              </button>
+              
+              <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="auth">
+                <i data-lucide="fingerprint" class="w-4 h-4 text-sky-400"></i>
+                <span>Biometric Auth</span>
+              </button>
+            </div>
 
-          <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="transactions">
-            <i data-lucide="list" class="w-4 h-4 text-sky-400"></i>
-            <span>Transaction Ledger</span>
-          </button>
-          
-          <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="recurring">
-            <i data-lucide="repeat" class="w-4 h-4 text-amber-400"></i>
-            <span>Subscription Radar</span>
-          </button>
-          
-          <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="settings">
-            <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
-            <span>Settings & Entitlement</span>
-          </button>
-          
-          <button class="screen-tab px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2 no-wrap" data-screen="auth">
-            <i data-lucide="fingerprint" class="w-4 h-4 text-sky-400"></i>
-            <span>Biometric Auth</span>
-          </button>
-        </div>
-
-        <!-- Dynamic Screen Explainer Card -->
-        <div class="max-w-3xl mx-auto glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 text-center space-y-4">
-          <div class="inline-block">
-            <span id="screen-detail-badge" class="px-3 py-1 rounded-full text-xs font-semibold border text-emerald-400 bg-emerald-500/10 border-emerald-500/20 no-wrap">
-              37% Used • On Track
-            </span>
+            <!-- Dynamic Screen Explainer Card -->
+            <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
+              <div class="inline-block">
+                <span id="screen-detail-badge" class="px-3 py-1 rounded-full text-xs font-semibold border text-emerald-400 bg-emerald-500/10 border-emerald-500/20 no-wrap">
+                  37% Used • On Track
+                </span>
+              </div>
+              <h3 id="screen-detail-title" class="text-2xl font-bold text-white text-balance">
+                Concentric Circular Burn Gauges
+              </h3>
+              <p id="screen-detail-desc" class="text-slate-300 text-sm sm:text-base text-pretty">
+                Visual circular gauge dynamically tracks daily safe spend, planned allowances, and month-end pace so you never run out of funds.
+              </p>
+              
+              <!-- Key Highlights -->
+              <div class="pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                  <span>Native 120Hz ProMotion SwiftUI</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                  <span>Dynamic Island Live Activity</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                  <span>Encrypted Offline SQLite Ledger</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                  <span>Private Apple iCloud Keychain</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <h3 id="screen-detail-title" class="text-2xl font-bold text-white text-balance">
-            Concentric Circular Burn Gauges
-          </h3>
-          <p id="screen-detail-desc" class="text-slate-300 text-sm sm:text-base max-w-xl mx-auto text-pretty">
-            Visual circular gauge dynamically tracks daily safe spend, planned allowances, and month-end pace so you never run out of funds.
-          </p>
-          <div class="pt-2">
-            <a href="https://apps.apple.com/app/financy-smart-budgeting/id6478912345" target="_blank" rel="noopener noreferrer" class="app-store-link inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300 no-wrap">
-              <span>Download & test on your iPhone</span>
-              <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </a>
+
+          <!-- Right Column: Live Interactive iPhone Emulator Screen (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col items-center justify-center relative">
+            <div class="iphone-frame">
+              <div class="iphone-screen">
+                <!-- Dynamic Island (Interactive) -->
+                <div class="dynamic-island" title="Tap to expand Dynamic Island Live Activity">
+                  <div class="dynamic-island-content flex items-center gap-2 px-3 text-[11px] text-emerald-400 font-bold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Safe Spend: ₹ 1,432 left/day</span>
+                  </div>
+                </div>
+
+                <!-- Animated Splash Screen Overlay Inside Phone -->
+                <div class="phone-splash-overlay">
+                  <div class="splash-logo-glow flex items-center justify-center">
+                    <img src="assets/images/app_icon.png" alt="Financy Splash" class="w-20 h-20 rounded-2xl">
+                  </div>
+                  <h4 class="text-xl font-extrabold text-white brand-font mt-5">Financy</h4>
+                  <p class="text-xs text-slate-400 mt-1">Starting encrypted ledger...</p>
+                  <div class="splash-progress-bar">
+                    <div class="splash-progress-fill"></div>
+                  </div>
+                </div>
+
+                <!-- Interactive Add Transaction Sheet Inside Phone -->
+                <div class="phone-tx-sheet">
+                  <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                    <span class="text-sm font-bold text-white">Quick Log Expense</span>
+                    <button class="close-tx-sheet text-slate-400 hover:text-white p-1">
+                      <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                  <div class="space-y-3 pt-3">
+                    <div>
+                      <label class="text-[10px] text-slate-400 font-semibold uppercase">Amount</label>
+                      <input type="text" value="₹ 450" class="tx-amount-input w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-white font-bold text-lg outline-none">
+                    </div>
+                    <div class="space-y-1">
+                      <label class="text-[10px] text-slate-400 font-semibold uppercase">Quick Category Presets</label>
+                      <div class="flex flex-wrap gap-1.5">
+                        <button class="tx-preset-chip px-2.5 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5" data-amount="₹ 250">☕️ Coffee</button>
+                        <button class="tx-preset-chip px-2.5 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5" data-amount="₹ 480">🚗 Uber</button>
+                        <button class="tx-preset-chip px-2.5 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5" data-amount="₹ 1,200">🍕 Dining</button>
+                      </div>
+                    </div>
+                    <button class="submit-tx-btn w-full mt-2 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition-all">
+                      Log Transaction
+                    </button>
+                  </div>
+                </div>
+
+                <img class="phone-mockup-img" src="assets/images/screen_budget.png" alt="Financy iOS Screen">
+
+                <!-- Interactive Native Tab Bar Inside Phone -->
+                <div class="phone-bottom-nav">
+                  <button class="phone-tab-btn" data-screen="home" title="Home Tab">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    <span>Home</span>
+                  </button>
+                  <button class="phone-tab-btn" data-screen="transactions" title="Transactions Tab">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                    <span>Ledger</span>
+                  </button>
+                  <button class="phone-tab-btn" data-screen="recurring" title="Recurring Tab">
+                    <i data-lucide="repeat" class="w-4 h-4"></i>
+                    <span>Bills</span>
+                  </button>
+                  <button class="phone-tab-btn active" data-screen="budget" title="Budgets Tab">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                    <span>Budgets</span>
+                  </button>
+                  <button class="phone-tab-btn" data-screen="settings" title="Settings Tab">
+                    <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                    <span>More</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Direct Simulator Action Bar (In Front of Emulator Screen) -->
+            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 z-40 relative w-full">
+              <button class="trigger-splash-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40 shadow-lg shadow-emerald-500/10 transition-all active:scale-95 no-wrap w-full sm:w-auto cursor-pointer">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-current text-emerald-400"></i>
+                <span>Replay Animated Splash Screen</span>
+              </button>
+              <button class="trigger-add-tx-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/40 shadow-lg shadow-sky-500/10 transition-all active:scale-95 no-wrap w-full sm:w-auto cursor-pointer">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-sky-400"></i>
+                <span>Test Quick Add Expense Sheet</span>
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-400 text-center mt-2.5 flex items-center justify-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Tap Dynamic Island or tabs inside screen to interact live</span>
+            </p>
+
           </div>
+
         </div>
 
       </div>

@@ -179,16 +179,16 @@ function setupThemeToggle() {
 
 // 3. Interactive Phone Simulator & Controls
 function setupPhoneSimulator() {
-  const phoneImg = document.getElementById("phone-mockup-img");
-  const splashOverlay = document.getElementById("phone-splash-overlay");
-  const splashFill = document.getElementById("splash-progress-fill");
-  const splashTrigger = document.getElementById("trigger-splash-btn");
+  const phoneImgs = document.querySelectorAll(".phone-mockup-img, #phone-mockup-img");
+  const splashOverlays = document.querySelectorAll(".phone-splash-overlay, #phone-splash-overlay");
+  const splashFills = document.querySelectorAll(".splash-progress-fill, #splash-progress-fill");
+  const splashTriggers = document.querySelectorAll(".trigger-splash-btn, #trigger-splash-btn");
 
-  const dynamicIsland = document.getElementById("dynamic-island");
-  const addTxTrigger = document.getElementById("trigger-add-tx-btn");
-  const txSheet = document.getElementById("phone-tx-sheet");
-  const closeTxSheet = document.getElementById("close-tx-sheet");
-  const submitTxBtn = document.getElementById("submit-tx-btn");
+  const dynamicIslands = document.querySelectorAll(".dynamic-island, #dynamic-island");
+  const addTxTriggers = document.querySelectorAll(".trigger-add-tx-btn, #trigger-add-tx-btn");
+  const txSheets = document.querySelectorAll(".phone-tx-sheet, #phone-tx-sheet");
+  const closeTxSheets = document.querySelectorAll(".close-tx-sheet, #close-tx-sheet");
+  const submitTxBtns = document.querySelectorAll(".submit-tx-btn, #submit-tx-btn");
 
   // Bottom Nav inside Phone
   const phoneTabs = document.querySelectorAll(".phone-tab-btn");
@@ -196,78 +196,89 @@ function setupPhoneSimulator() {
   // A. Splash Screen Replay
   function runSplashScreen() {
     playHapticSound("splash");
-    if (!splashOverlay || !splashFill) return;
+    if (!splashOverlays.length) return;
 
-    splashOverlay.classList.add("active");
-    splashFill.style.width = "0%";
+    splashOverlays.forEach(overlay => overlay.classList.add("active"));
+    splashFills.forEach(fill => { fill.style.width = "0%"; });
 
     setTimeout(() => {
-      splashFill.style.width = "100%";
+      splashFills.forEach(fill => { fill.style.width = "100%"; });
     }, 50);
 
     setTimeout(() => {
-      splashOverlay.classList.remove("active");
+      splashOverlays.forEach(overlay => overlay.classList.remove("active"));
       playHapticSound("success");
       // Show budget or home screen
       switchScreen("budget");
     }, 1700);
   }
 
-  if (splashTrigger) {
-    splashTrigger.addEventListener("click", runSplashScreen);
-  }
+  splashTriggers.forEach(btn => {
+    btn.addEventListener("click", runSplashScreen);
+  });
 
   // B. Clickable Dynamic Island
-  if (dynamicIsland) {
-    dynamicIsland.addEventListener("click", () => {
+  dynamicIslands.forEach(island => {
+    island.addEventListener("click", () => {
       playHapticSound("click");
-      dynamicIsland.classList.toggle("expanded");
-      if (dynamicIsland.classList.contains("expanded")) {
+      island.classList.toggle("expanded");
+      if (island.classList.contains("expanded")) {
         setTimeout(() => {
-          dynamicIsland.classList.remove("expanded");
+          island.classList.remove("expanded");
         }, 4000);
       }
     });
-  }
+  });
 
   // C. Interactive Add Transaction Sheet
-  if (addTxTrigger && txSheet) {
-    addTxTrigger.addEventListener("click", () => {
+  addTxTriggers.forEach(trigger => {
+    trigger.addEventListener("click", () => {
       playHapticSound("click");
-      txSheet.classList.toggle("active");
+      txSheets.forEach(sheet => {
+        sheet.classList.toggle("active");
+      });
     });
-  }
+  });
 
-  if (closeTxSheet && txSheet) {
-    closeTxSheet.addEventListener("click", () => {
-      txSheet.classList.remove("active");
+  closeTxSheets.forEach(btn => {
+    btn.addEventListener("click", () => {
+      txSheets.forEach(sheet => {
+        sheet.classList.remove("active");
+      });
     });
-  }
+  });
 
-  if (submitTxBtn && txSheet) {
-    submitTxBtn.addEventListener("click", () => {
+  submitTxBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
       playHapticSound("success");
-      submitTxBtn.textContent = "✓ Logged to Ledger!";
-      submitTxBtn.classList.remove("bg-emerald-500");
-      submitTxBtn.classList.add("bg-emerald-400");
+      submitTxBtns.forEach(b => {
+        b.textContent = "✓ Logged to Ledger!";
+        b.classList.remove("bg-emerald-500");
+        b.classList.add("bg-emerald-400");
+      });
 
       setTimeout(() => {
-        txSheet.classList.remove("active");
-        submitTxBtn.textContent = "Log Transaction";
-        submitTxBtn.classList.add("bg-emerald-500");
-        submitTxBtn.classList.remove("bg-emerald-400");
+        txSheets.forEach(sheet => {
+          sheet.classList.remove("active");
+        });
+        submitTxBtns.forEach(b => {
+          b.textContent = "Log Transaction";
+          b.classList.add("bg-emerald-500");
+          b.classList.remove("bg-emerald-400");
+        });
         switchScreen("budget");
       }, 700);
     });
-  }
+  });
 
   // Presets in Tx Sheet
   document.querySelectorAll(".tx-preset-chip").forEach(chip => {
     chip.addEventListener("click", () => {
       playHapticSound("click");
       const amt = chip.getAttribute("data-amount");
-      const txAmtInput = document.getElementById("tx-amount-input");
-      if (txAmtInput) txAmtInput.value = amt;
+      document.querySelectorAll(".tx-amount-input, #tx-amount-input").forEach(input => {
+        input.value = amt;
+      });
     });
   });
 
@@ -275,8 +286,6 @@ function setupPhoneSimulator() {
   phoneTabs.forEach(tab => {
     tab.addEventListener("click", () => {
       const screenKey = tab.getAttribute("data-screen");
-      phoneTabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
       switchScreen(screenKey);
     });
   });
@@ -285,14 +294,14 @@ function setupPhoneSimulator() {
 // 4. Universal Screen Switcher
 function switchScreen(key) {
   playHapticSound("click");
-  const phoneImg = document.getElementById("phone-mockup-img");
+  const phoneImgs = document.querySelectorAll(".phone-mockup-img, #phone-mockup-img");
   const screenTitle = document.getElementById("screen-detail-title");
   const screenDesc = document.getElementById("screen-detail-desc");
   const screenBadge = document.getElementById("screen-detail-badge");
   const externalTabs = document.querySelectorAll(".screen-tab");
   const phoneTabs = document.querySelectorAll(".phone-tab-btn");
 
-  if (!screensData[key] || !phoneImg) return;
+  if (!screensData[key] || !phoneImgs.length) return;
 
   // Sync external tab buttons
   externalTabs.forEach(t => {
@@ -312,20 +321,24 @@ function switchScreen(key) {
     }
   });
 
-  // Smooth fade transition on image
-  phoneImg.style.opacity = "0.2";
-  phoneImg.style.transform = "scale(0.97)";
+  // Smooth fade transition on all phone images
+  phoneImgs.forEach(img => {
+    img.style.opacity = "0.2";
+    img.style.transform = "scale(0.97)";
+  });
 
   setTimeout(() => {
-    phoneImg.src = screensData[key].src;
-    phoneImg.style.opacity = "1";
-    phoneImg.style.transform = "scale(1)";
+    phoneImgs.forEach(img => {
+      img.src = screensData[key].src;
+      img.style.opacity = "1";
+      img.style.transform = "scale(1)";
+    });
 
     if (screenTitle) screenTitle.textContent = screensData[key].title;
     if (screenDesc) screenDesc.textContent = screensData[key].description;
     if (screenBadge) {
       screenBadge.textContent = screensData[key].badge;
-      screenBadge.className = `px-3 py-1 rounded-full text-xs font-semibold border ${screensData[key].badgeColor}`;
+      screenBadge.className = `px-3 py-1 rounded-full text-xs font-semibold border ${screensData[key].badgeColor} no-wrap`;
     }
   }, 120);
 }

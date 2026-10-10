@@ -26,6 +26,11 @@ struct FinPilotAIApp: App {
         if let idx = CommandLine.arguments.firstIndex(of: "--tab"), idx + 1 < CommandLine.arguments.count, let val = Int(CommandLine.arguments[idx + 1]) {
             UserDefaults.standard.set(val, forKey: "selectedMainTab")
         }
+        if CommandLine.arguments.contains("--light-theme") {
+            UserDefaults.standard.set("light", forKey: "appTheme")
+        } else if CommandLine.arguments.contains("--dark-theme") {
+            UserDefaults.standard.set("dark", forKey: "appTheme")
+        }
         if CommandLine.arguments.contains("--add-category") {
 
             UserDefaults.standard.set(4, forKey: "selectedMainTab")

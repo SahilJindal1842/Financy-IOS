@@ -12,207 +12,66 @@ struct ProfileView: View {
     @State private var showDeleteAccountConfirm = false
     @State private var showReportsSheet = false
     @State private var showEditProfileSheet = false
+    @State private var showSupportSheet = false
+    @State private var isExporting = false
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header with Green Background
-                    ZStack(alignment: .bottom) {
-                        // Dark Green Extended Header
-                        FinPilotColors.primaryDark
-                            .frame(height: 250)
-                            .edgesIgnoringSafeArea(.top)
-                        
-                        VStack(spacing: 12) {
-                            if let avatarStr = authViewModel.currentUser?.avatar, !avatarStr.isEmpty {
-                                if avatarStr.starts(with: "/") {
-                                    let fullUrlStr = NetworkConfig.baseURLString.replacingOccurrences(of: "/api", with: "") + avatarStr
-                                    AsyncImage(url: URL(string: fullUrlStr)) { image in
-                                        image.resizable().scaledToFill()
-                                    } placeholder: {
-                                        ProgressView()
-                                    }
-                                    .frame(width: 80, height: 80)
-                                    .clipShape(Circle())
-                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                } else if let data = Data(base64Encoded: avatarStr), let uiImage = UIImage(data: data) {
-                                    Image(uiImage: uiImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 80, height: 80)
-                                        .clipShape(Circle())
-                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                } else {
-                                    Image(systemName: "person.circle.fill")
-                                        .font(.system(size: 80))
-                                        .foregroundColor(.white)
-                                        .background(Color.white.opacity(0.2))
-                                        .clipShape(Circle())
-                                }
-                            } else {
-                                Image(systemName: "person.circle.fill")
-                                    .font(.system(size: 80))
-                                    .foregroundColor(.white)
-                                    .background(Color.white.opacity(0.2))
-                                    .clipShape(Circle())
-                            }
+            ZStack {
+                FinPilotColors.background.ignoresSafeArea()
+                
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 20) {
+                            // Top Header Bar
+                            headerBar
                             
-                            Text(authViewModel.currentUser?.name ?? "User")
-                                .font(FinPilotTypography.title2)
-                                .foregroundColor(.white)
+                            // User Profile Hero Card
+                            profileHeroCard
                             
-                            Text(authViewModel.currentUser?.email ?? "")
-                                .font(FinPilotTypography.subheadline)
-                                .foregroundColor(.white.opacity(0.8))
+                            // Free Trial or Lifetime Status Banner
+                            trialStatusCard
+                            
+                            // Financial Health & Pulse Card
+                            financialHealthCard
+                            
+                            // Group 1: Financial Management
+                            financialManagementSection
+                            
+                            // Group 2: App Preferences
+                            appPreferencesSection
+                            
+                            // Group 3: Account & Membership
+                            accountMembershipSection
+                            
+                            // Group 4: Support & About
+                            supportAboutSection
+                            
+                            // Group 5: Session & Danger Zone
+                            sessionDangerSection
+                            
+                            // App Version Footer
+                            appVersionFooter
+                                .id("footer_anchor")
                         }
-                        .padding(.bottom, 60)
-                        
-                        // Overlapping Financial Health Card
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Financial Health")
-                                    .font(FinPilotTypography.subheadline)
-                                    .foregroundColor(FinPilotColors.textSecondary)
-                                Text("Good")
-                                    .font(FinPilotTypography.headline)
-                                    .foregroundColor(FinPilotColors.success)
-                            }
-                            Spacer()
-                            Image(systemName: "checkmark.shield.fill")
-                                .font(.title)
-                                .foregroundColor(FinPilotColors.success)
-                        }
-                        .padding(20)
-                        .background(FinPilotColors.surface)
-                        .cornerRadius(16)
-                        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-                        .padding(.horizontal, 24)
-                        .offset(y: 40) // Overlap the header
+                        .padding(.bottom, 40)
                     }
-                    .padding(.bottom, 60) // Space for the overlapping card
-                    
-                    // Subscription & Trial Status Card
-                    trialStatusCard
-                    
-                    // Settings List
-                    VStack(spacing: 16) {
-                        // Appearance & Dark Mode Selector
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 12) {
-                                Image(systemName: appTheme == "dark" ? "moon.fill" : (appTheme == "light" ? "sun.max.fill" : "circle.righthalf.filled"))
-                                    .font(.title3)
-                                    .foregroundColor(.purple)
-                                    .frame(width: 40, height: 40)
-                                    .background(Color.purple.opacity(0.15))
-                                    .clipShape(Circle())
-                                
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Appearance")
-                                        .font(FinPilotTypography.headline)
-                                        .foregroundColor(FinPilotColors.textPrimary)
-                                    Text(appTheme == "system" ? "Device System Mode" : (appTheme == "dark" ? "Dark Mode" : "Light Mode"))
-                                        .font(FinPilotTypography.caption)
-                                        .foregroundColor(FinPilotColors.textSecondary)
+                    .onAppear {
+                        if CommandLine.arguments.contains("--scroll-bottom") {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                withAnimation {
+                                    proxy.scrollTo("footer_anchor", anchor: .bottom)
                                 }
-                                
-                                Spacer()
                             }
-                            
-                            Picker("Theme", selection: $appTheme) {
-                                Text("System").tag("system")
-                                Text("Light").tag("light")
-                                Text("Dark").tag("dark")
-                            }
-                            .pickerStyle(.segmented)
-                        }
-                        .padding()
-                        .background(FinPilotColors.surface)
-                        .cornerRadius(16)
-                        
-                        NavigationLink(destination: SavingsModuleView()) {
-                            SettingsRow(icon: "banknote.fill", title: "Savings Module & Reserves", color: .teal)
-                        }
-                        NavigationLink(destination: MonthlyExpenseReportsView()) {
-                            SettingsRow(icon: "doc.text.magnifyingglass", title: "Monthly Expense Reports", color: .indigo)
-                        }
-                        NavigationLink(destination: ReportsView()) {
-                            SettingsRow(icon: "sparkles", title: "AI Insights", color: .indigo)
-                        }
-                        NavigationLink(destination: EditProfileView()) {
-                            SettingsRow(icon: "person.fill", title: "Account & Profile", color: .blue)
-                        }
-                        Button(action: { showAddCategorySheet = true }) {
-                            SettingsRow(icon: "plus.circle.fill", title: "Create New Category", color: .green)
-                        }
-                        NavigationLink(destination: ManageCategoriesView()) {
-                            SettingsRow(icon: "list.bullet", title: "Manage Categories", color: .pink)
-                        }
-                        NavigationLink(destination: NotificationsView()) {
-                            SettingsRow(icon: "bell.fill", title: "Activity Notifications", color: .orange)
-                        }
-                        Button(action: {
-                            exportData()
-                        }) {
-                            SettingsRow(icon: "arrow.down.doc.fill", title: "Export Data", color: .purple)
-                        }
-                        SettingsRow(icon: "questionmark.circle.fill", title: "Help & Support", color: .green)
-                        NavigationLink(destination: AboutView()) {
-                            SettingsRow(icon: "info.circle.fill", title: "About", color: .gray)
-                        }
-                        
-                        Button(action: {
-                            authViewModel.logout()
-                        }) {
-                            HStack {
-                                Image(systemName: "arrow.right.square.fill")
-                                    .font(.title3)
-                                    .foregroundColor(FinPilotColors.error)
-                                    .frame(width: 40, height: 40)
-                                    .background(FinPilotColors.error.opacity(0.15))
-                                    .clipShape(Circle())
-                                
-                                Text("Log Out")
-                                    .font(FinPilotTypography.headline)
-                                    .foregroundColor(FinPilotColors.error)
-                                
-                                Spacer()
-                            }
-                            .padding()
-                            .background(FinPilotColors.surface)
-                            .cornerRadius(16)
-                        }
-                        
-                        Button(action: {
-                            showDeleteAccountConfirm = true
-                        }) {
-                            HStack {
-                                Image(systemName: "trash.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.red)
-                                    .frame(width: 40, height: 40)
-                                    .background(Color.red.opacity(0.12))
-                                    .clipShape(Circle())
-                                
-                                Text("Delete Account")
-                                    .font(FinPilotTypography.subheadline)
-                                    .foregroundColor(.red)
-                                
-                                Spacer()
-                            }
-                            .padding()
-                            .background(FinPilotColors.surface)
-                            .cornerRadius(16)
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 40)
                 }
             }
+            .navigationBarHidden(true)
             .alert(isPresented: $showDeleteAccountConfirm) {
                 Alert(
                     title: Text("Delete Account"),
-                    message: Text("Are you sure you want to delete your Financy account? This action cannot be undone."),
+                    message: Text("Are you sure you want to permanently delete your Financy account? All transactions, budgets, and savings records will be removed. This action cannot be undone."),
                     primaryButton: .destructive(Text("Delete Account")) {
                         Task {
                             _ = await authViewModel.deleteAccount()
@@ -221,8 +80,6 @@ struct ProfileView: View {
                     secondaryButton: .cancel()
                 )
             }
-            .background(FinPilotColors.background.ignoresSafeArea())
-            .navigationBarHidden(true)
             .sheet(isPresented: $showAddCategorySheet) {
                 NavigationView {
                     EditCategoryView(category: nil as Category?, onUpdate: { })
@@ -251,6 +108,9 @@ struct ProfileView: View {
                     EditProfileView()
                 }
             }
+            .sheet(isPresented: $showSupportSheet) {
+                SupportSheetView()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .showManageCategories)) { _ in
                 showManageCategoriesSheet = true
             }
@@ -272,114 +132,635 @@ struct ProfileView: View {
         }
     }
     
+    // MARK: - Header Bar
+    private var headerBar: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Settings")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(FinPilotColors.textPrimary)
+                Text("Account, preferences & financial tools")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(FinPilotColors.textSecondary)
+            }
+            
+            Spacer()
+            
+            NavigationLink(destination: EditProfileView()) {
+                HStack(spacing: 5) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 12, weight: .bold))
+                    Text("Edit")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .foregroundColor(FinPilotColors.primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(FinPilotColors.primary.opacity(0.12))
+                .clipShape(Capsule())
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+    }
+    
+    // MARK: - Profile Hero Card
+    private var profileHeroCard: some View {
+        NavigationLink(destination: EditProfileView()) {
+            HStack(spacing: 16) {
+                // Avatar with Camera/Pencil Badge
+                ZStack(alignment: .bottomTrailing) {
+                    userAvatarView(size: 62)
+                    
+                    Circle()
+                        .fill(FinPilotColors.primary)
+                        .frame(width: 20, height: 20)
+                        .overlay(
+                            Image(systemName: "pencil")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.white)
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(FinPilotColors.surface, lineWidth: 2)
+                        )
+                        .offset(x: 2, y: 2)
+                }
+                
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 6) {
+                        Text(userNameDisplay)
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                            .lineLimit(1)
+                        
+                        if authViewModel.currentUser?.role?.uppercased() == "ADMIN" {
+                            Text("ADMIN")
+                                .font(.system(size: 9, weight: .heavy))
+                                .foregroundColor(.blue)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.blue.opacity(0.12))
+                                .cornerRadius(4)
+                        }
+                    }
+                    
+                    Text(userContactDisplay)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(FinPilotColors.textSecondary)
+                        .lineLimit(1)
+                    
+                    membershipPill
+                        .padding(.top, 2)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(FinPilotColors.textSecondary.opacity(0.5))
+            }
+            .padding(16)
+            .background(FinPilotColors.surface)
+            .cornerRadius(18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(FinPilotColors.border.opacity(0.7), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 20)
+    }
+    
+    // MARK: - Avatar View
+    @ViewBuilder
+    private func userAvatarView(size: CGFloat) -> some View {
+        if let avatarStr = authViewModel.currentUser?.avatar, !avatarStr.isEmpty {
+            if avatarStr.starts(with: "/") {
+                let fullUrlStr = NetworkConfig.baseURLString.replacingOccurrences(of: "/api", with: "") + avatarStr
+                AsyncImage(url: URL(string: fullUrlStr)) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    ProgressView()
+                }
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(FinPilotColors.primary.opacity(0.3), lineWidth: 2))
+            } else if let data = Data(base64Encoded: avatarStr), let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size, height: size)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(FinPilotColors.primary.opacity(0.3), lineWidth: 2))
+            } else {
+                initialsAvatarView(size: size)
+            }
+        } else {
+            initialsAvatarView(size: size)
+        }
+    }
+    
+    private func initialsAvatarView(size: CGFloat) -> some View {
+        let name = authViewModel.currentUser?.name ?? "User"
+        let components = name.split(separator: " ")
+        let initials: String
+        if components.count >= 2 {
+            initials = String(components[0].prefix(1) + components[1].prefix(1)).uppercased()
+        } else {
+            initials = String(name.prefix(2)).uppercased()
+        }
+        
+        return ZStack {
+            LinearGradient(
+                colors: [FinPilotColors.primary, FinPilotColors.primaryDark],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .frame(width: size, height: size)
+            .clipShape(Circle())
+            
+            Text(initials.isEmpty ? "FI" : initials)
+                .font(.system(size: size * 0.4, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+        }
+        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1.5))
+    }
+    
+    private var userNameDisplay: String {
+        if let name = authViewModel.currentUser?.name, !name.trimmingCharacters(in: .whitespaces).isEmpty {
+            return name
+        }
+        return "Financy Member"
+    }
+    
+    private var userContactDisplay: String {
+        if let email = authViewModel.currentUser?.email, !email.isEmpty {
+            return email
+        }
+        if let mobile = authViewModel.currentUser?.mobileNumber, !mobile.isEmpty {
+            return mobile
+        }
+        return "Tap to set up personal profile"
+    }
+    
+    // MARK: - Membership Pill
+    private var membershipPill: some View {
+        Group {
+            if authViewModel.isSubscribed {
+                HStack(spacing: 4) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(Color(hex: "#D97706"))
+                    Text("Pro Lifetime")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(Color(hex: "#D97706"))
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color(hex: "#FEF3C7"))
+                .cornerRadius(6)
+            } else if authViewModel.isTrialExpired {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(FinPilotColors.error)
+                    Text("Trial Expired")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(FinPilotColors.error)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(FinPilotColors.error.opacity(0.12))
+                .cornerRadius(6)
+            } else {
+                HStack(spacing: 4) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(FinPilotColors.primary)
+                    Text("\(authViewModel.trialDaysRemaining)d Free Trial")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(FinPilotColors.primary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(FinPilotColors.primary.opacity(0.12))
+                .cornerRadius(6)
+            }
+        }
+    }
+    
+    // MARK: - Subscription & Trial Status Card
     private var trialStatusCard: some View {
         Group {
             if authViewModel.isSubscribed {
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     ZStack {
                         Circle()
-                            .fill(Color(hex: "#FFD700").opacity(0.2))
-                            .frame(width: 44, height: 44)
+                            .fill(Color(hex: "#FFD700").opacity(0.18))
+                            .frame(width: 42, height: 42)
                         Image(systemName: "crown.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(Color(hex: "#FF9900"))
+                            .font(.system(size: 18))
+                            .foregroundColor(Color(hex: "#D97706"))
                     }
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Financy Pro Lifetime")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(FinPilotColors.textPrimary)
-                        Text("All features unlocked forever")
+                        HStack(spacing: 6) {
+                            Text("Financy Pro Lifetime")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(FinPilotColors.textPrimary)
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(FinPilotColors.primary)
+                        }
+                        Text("All premium tools, AI insights & vaults unlocked forever")
                             .font(.system(size: 12))
                             .foregroundColor(FinPilotColors.textSecondary)
+                            .lineLimit(1)
                     }
                     
                     Spacer()
-                        
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundColor(FinPilotColors.primary)
-                        .font(.system(size: 22))
-                }
-                .padding(14)
-                .background(FinPilotColors.surface)
-                .cornerRadius(16)
-                .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 16)
-            } else {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(authViewModel.isTrialExpired ? Color.red.opacity(0.15) : FinPilotColors.primary.opacity(0.15))
-                            .frame(width: 44, height: 44)
-                        Image(systemName: authViewModel.isTrialExpired ? "exclamationmark.shield.fill" : "gift.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(authViewModel.isTrialExpired ? .red : FinPilotColors.primary)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(authViewModel.isTrialExpired ? "7-Day Free Trial Expired" : "\(authViewModel.trialDaysRemaining) Days Left in Free Trial")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(FinPilotColors.textPrimary)
-                        Text(authViewModel.isTrialExpired ? "Subscribe for $9.99 lifetime" : "One-time $9.99 for lifetime access")
-                            .font(.system(size: 12))
-                            .foregroundColor(FinPilotColors.textSecondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Button(action: { showPaywall = true }) {
-                        Text("Upgrade")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
-                            .background(authViewModel.isTrialExpired ? Color.red : FinPilotColors.primary)
-                            .cornerRadius(10)
-                    }
                 }
                 .padding(14)
                 .background(FinPilotColors.surface)
                 .cornerRadius(16)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(authViewModel.isTrialExpired ? Color.red.opacity(0.3) : FinPilotColors.primary.opacity(0.2), lineWidth: 1)
+                        .stroke(FinPilotColors.primary.opacity(0.25), lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 16)
+                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                .padding(.horizontal, 20)
+            } else {
+                Button(action: { showPaywall = true }) {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            Circle()
+                                .fill(authViewModel.isTrialExpired ? FinPilotColors.error.opacity(0.15) : FinPilotColors.primary.opacity(0.15))
+                                .frame(width: 44, height: 44)
+                            Image(systemName: authViewModel.isTrialExpired ? "exclamationmark.shield.fill" : "gift.fill")
+                                .font(.system(size: 20))
+                                .foregroundColor(authViewModel.isTrialExpired ? FinPilotColors.error : FinPilotColors.primary)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 6) {
+                                Text(authViewModel.isTrialExpired ? "7-Day Trial Expired" : "\(authViewModel.trialDaysRemaining) Days Left in Free Trial")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(FinPilotColors.textPrimary)
+                                
+                                Text("LIFETIME")
+                                    .font(.system(size: 8, weight: .heavy))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 2)
+                                    .background(Color(hex: "#D97706"))
+                                    .cornerRadius(4)
+                            }
+                            
+                            Text(authViewModel.isTrialExpired ? "Tap to unlock lifetime access for $9.99" : "One-time $9.99 purchase • No subscription")
+                                .font(.system(size: 12))
+                                .foregroundColor(FinPilotColors.textSecondary)
+                                .lineLimit(1)
+                        }
+                        
+                        Spacer()
+                        
+                        Text(authViewModel.isTrialExpired ? "Unlock" : "Upgrade")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(authViewModel.isTrialExpired ? FinPilotColors.error : FinPilotColors.primary)
+                            .cornerRadius(10)
+                            .shadow(color: (authViewModel.isTrialExpired ? FinPilotColors.error : FinPilotColors.primary).opacity(0.3), radius: 4, x: 0, y: 2)
+                    }
+                    .padding(14)
+                    .background(FinPilotColors.surface)
+                    .cornerRadius(16)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(authViewModel.isTrialExpired ? FinPilotColors.error.opacity(0.35) : FinPilotColors.primary.opacity(0.25), lineWidth: 1.5)
+                    )
+                    .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal, 20)
             }
         }
     }
     
+    // MARK: - Financial Health & Overview Card
+    private var financialHealthCard: some View {
+        NavigationLink(destination: MonthlyExpenseReportsView()) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(FinPilotColors.primary.opacity(0.12))
+                        .frame(width: 42, height: 42)
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(FinPilotColors.primary)
+                }
+                
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack {
+                        Text("Financial Health")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                        Spacer()
+                        Text("ON TRACK")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(FinPilotColors.primary)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(FinPilotColors.primary.opacity(0.12))
+                            .cornerRadius(6)
+                    }
+                    
+                    Text("Budget limits, recurring schedules & reserves verified.")
+                        .font(.system(size: 12))
+                        .foregroundColor(FinPilotColors.textSecondary)
+                        .lineLimit(1)
+                }
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(FinPilotColors.textSecondary.opacity(0.4))
+            }
+            .padding(14)
+            .background(FinPilotColors.surface)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(FinPilotColors.border.opacity(0.7), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 2)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 20)
+    }
+    
+    // MARK: - Section 1: Financial Management
+    private var financialManagementSection: some View {
+        SettingsSectionCard(header: "Financial Management") {
+            NavigationLink(destination: ManageCategoriesView()) {
+                SettingsItemRow(
+                    icon: "tag.fill",
+                    iconColor: FinPilotColors.primary,
+                    title: "Manage Categories",
+                    subtitle: "Income, expense & recurring tags"
+                )
+            }
+            
+            Button(action: { showAddCategorySheet = true }) {
+                SettingsItemRow(
+                    icon: "plus.circle.fill",
+                    iconColor: Color(hex: "#10B981"),
+                    title: "Create New Category",
+                    subtitle: "Add custom spending or income category"
+                )
+            }
+            
+            NavigationLink(destination: SavingsModuleView()) {
+                SettingsItemRow(
+                    icon: "banknote.fill",
+                    iconColor: Color(hex: "#0EA5E9"),
+                    title: "Savings Module & Reserves",
+                    subtitle: "Target funds, emergency reserves & goals"
+                )
+            }
+            
+            NavigationLink(destination: MonthlyExpenseReportsView()) {
+                SettingsItemRow(
+                    icon: "doc.text.magnifyingglass",
+                    iconColor: Color(hex: "#6366F1"),
+                    title: "Monthly Expense Reports",
+                    subtitle: "Historical summaries & statements"
+                )
+            }
+            
+            NavigationLink(destination: ReportsView()) {
+                SettingsItemRow(
+                    icon: "sparkles",
+                    iconColor: Color(hex: "#8B5CF6"),
+                    title: "AI Financial Insights",
+                    subtitle: "Automated analysis & money-saving tips",
+                    showDivider: false
+                )
+            }
+        }
+    }
+    
+    // MARK: - Section 2: App Preferences
+    private var appPreferencesSection: some View {
+        SettingsSectionCard(header: "App Preferences") {
+            // Theme Row
+            VStack(spacing: 12) {
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color(hex: "#8B5CF6").opacity(0.12))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: appTheme == "dark" ? "moon.fill" : (appTheme == "light" ? "sun.max.fill" : "circle.righthalf.filled"))
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(Color(hex: "#8B5CF6"))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Appearance")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(FinPilotColors.textPrimary)
+                        Text(appTheme == "system" ? "Device System Mode" : (appTheme == "dark" ? "Dark Theme" : "Light Theme"))
+                            .font(.system(size: 12))
+                            .foregroundColor(FinPilotColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                }
+                
+                Picker("Theme", selection: $appTheme) {
+                    Text("System").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+                .pickerStyle(.segmented)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            
+            Divider()
+                .background(FinPilotColors.divider.opacity(0.5))
+                .padding(.leading, 66)
+            
+            NavigationLink(destination: NotificationsView()) {
+                SettingsItemRow(
+                    icon: "bell.badge.fill",
+                    iconColor: Color(hex: "#F59E0B"),
+                    title: "Activity Notifications",
+                    subtitle: "Recurring bill alerts & payment reminders"
+                )
+            }
+            
+            Button(action: { exportData() }) {
+                SettingsItemRow(
+                    icon: "arrow.down.doc.fill",
+                    iconColor: Color(hex: "#10B981"),
+                    title: "Export Data (CSV)",
+                    subtitle: isExporting ? "Exporting data..." : "Download your financial transactions",
+                    showDivider: false
+                ) {
+                    if isExporting {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(FinPilotColors.primary)
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Section 3: Account & Membership
+    private var accountMembershipSection: some View {
+        SettingsSectionCard(header: "Account & Membership") {
+            NavigationLink(destination: EditProfileView()) {
+                SettingsItemRow(
+                    icon: "person.crop.circle.fill",
+                    iconColor: Color(hex: "#3B82F6"),
+                    title: "Personal Profile",
+                    subtitle: "Name, email, mobile & default currency"
+                )
+            }
+            
+            Button(action: { showPaywall = true }) {
+                SettingsItemRow(
+                    icon: "crown.fill",
+                    iconColor: Color(hex: "#D97706"),
+                    title: "Financy Pro Lifetime",
+                    subtitle: authViewModel.isSubscribed ? "Active • Full lifetime access" : "Upgrade now for one-time $9.99",
+                    showDivider: false
+                ) {
+                    if authViewModel.isSubscribed {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(FinPilotColors.primary)
+                    } else {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(FinPilotColors.textSecondary.opacity(0.5))
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Section 4: Support & About
+    private var supportAboutSection: some View {
+        SettingsSectionCard(header: "Support & Legal") {
+            Button(action: { showSupportSheet = true }) {
+                SettingsItemRow(
+                    icon: "questionmark.circle.fill",
+                    iconColor: Color(hex: "#10B981"),
+                    title: "Help & Support",
+                    subtitle: "FAQ, guides & contact customer support"
+                )
+            }
+            
+            NavigationLink(destination: AboutView()) {
+                SettingsItemRow(
+                    icon: "info.circle.fill",
+                    iconColor: Color(hex: "#64748B"),
+                    title: "About Financy",
+                    subtitle: "Version 1.0.0 • Terms & Privacy",
+                    showDivider: false
+                )
+            }
+        }
+    }
+    
+    // MARK: - Section 5: Session & Danger Zone
+    private var sessionDangerSection: some View {
+        SettingsSectionCard(header: "Session & Account") {
+            Button(action: { authViewModel.logout() }) {
+                SettingsItemRow(
+                    icon: "arrow.right.square.fill",
+                    iconColor: FinPilotColors.error,
+                    title: "Sign Out",
+                    subtitle: "Safely sign out of this device",
+                    titleColor: FinPilotColors.error
+                ) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(FinPilotColors.error.opacity(0.6))
+                }
+            }
+            
+            Button(action: { showDeleteAccountConfirm = true }) {
+                SettingsItemRow(
+                    icon: "trash.fill",
+                    iconColor: Color.red.opacity(0.85),
+                    title: "Delete Account",
+                    subtitle: "Permanently delete account and all records",
+                    titleColor: Color.red.opacity(0.9),
+                    showDivider: false
+                ) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color.red.opacity(0.4))
+                }
+            }
+        }
+    }
+    
+    // MARK: - App Version Footer
+    private var appVersionFooter: some View {
+        VStack(spacing: 4) {
+            Text("Financy v1.0.0 (Build 26)")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(FinPilotColors.textSecondary.opacity(0.8))
+            Text("Crafted for complete financial control & privacy")
+                .font(.system(size: 11))
+                .foregroundColor(FinPilotColors.textSecondary.opacity(0.6))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 4)
+    }
+    
+    // MARK: - Data Export
     private func exportData() {
+        guard !isExporting else { return }
+        isExporting = true
+        
         Task {
             do {
                 let txs: [Transaction] = try await APIManager.shared.request(endpoint: "/transactions")
                 
-                var csvString = "Expense Date,Category,Note,Amount\n"
-                
+                var csvString = "Date,Category,Type,Note,Amount\n"
                 let dateFormatter = DateFormatter()
-                // Convert from ISO or decode directly? tx.date is a Date object.
                 dateFormatter.dateFormat = "yyyy-MM-dd"
                 
                 for tx in txs {
                     let dateStr = dateFormatter.string(from: tx.date)
                     let categoryStr = (tx.categoryId ?? "Uncategorized").replacingOccurrences(of: "\"", with: "\"\"")
                     let noteStr = (tx.note ?? "").replacingOccurrences(of: "\"", with: "\"\"")
-                    let amountStr = String(format: "%.2f", abs(tx.amount)) // Positive amount for export readability, or leave as is
+                    let typeStr = tx.amount >= 0 ? "Income" : "Expense"
+                    let amountStr = String(format: "%.2f", abs(tx.amount))
                     
-                    let line = "\(dateStr),\"\(categoryStr)\",\"\(noteStr)\",\(amountStr)\n"
+                    let line = "\(dateStr),\"\(categoryStr)\",\(typeStr),\"\(noteStr)\",\(amountStr)\n"
                     csvString.append(line)
                 }
                 
-                let fileName = "Transactions_\(dateFormatter.string(from: Date())).csv"
+                let fileName = "Financy_Export_\(dateFormatter.string(from: Date())).csv"
                 let tempDir = FileManager.default.temporaryDirectory
                 let fileURL = tempDir.appendingPathComponent(fileName)
                 
                 try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
                 
                 await MainActor.run {
+                    isExporting = false
                     let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
                     if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                        let rootVC = windowScene.windows.first?.rootViewController {
@@ -394,37 +775,291 @@ struct ProfileView: View {
                     }
                 }
             } catch {
+                await MainActor.run {
+                    isExporting = false
+                }
                 print("Failed to export data: \(error)")
             }
         }
     }
 }
 
+// MARK: - Inset Grouped Settings Card Container
+struct SettingsSectionCard<Content: View>: View {
+    let header: String
+    let content: Content
+    
+    init(header: String, @ViewBuilder content: () -> Content) {
+        self.header = header
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(header)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundColor(FinPilotColors.textSecondary)
+                .textCase(.uppercase)
+                .padding(.horizontal, 24)
+            
+            VStack(spacing: 0) {
+                content
+            }
+            .background(FinPilotColors.surface)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(FinPilotColors.border.opacity(0.7), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 2)
+            .padding(.horizontal, 20)
+        }
+    }
+}
+
+// MARK: - Grouped Settings Item Row
+struct SettingsItemRow<Trailing: View>: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    var subtitle: String? = nil
+    var titleColor: Color = FinPilotColors.textPrimary
+    var showDivider: Bool = true
+    var trailing: Trailing
+    
+    init(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        subtitle: String? = nil,
+        titleColor: Color = FinPilotColors.textPrimary,
+        showDivider: Bool = true,
+        @ViewBuilder trailing: () -> Trailing = {
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(FinPilotColors.textSecondary.opacity(0.5))
+        }
+    ) {
+        self.icon = icon
+        self.iconColor = iconColor
+        self.title = title
+        self.subtitle = subtitle
+        self.titleColor = titleColor
+        self.showDivider = showDivider
+        self.trailing = trailing()
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 14) {
+                // Professional rounded icon container
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(iconColor.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(iconColor)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(titleColor)
+                    
+                    if let subtitle = subtitle, !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.system(size: 12))
+                            .foregroundColor(FinPilotColors.textSecondary)
+                            .lineLimit(1)
+                    }
+                }
+                
+                Spacer()
+                
+                trailing
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            
+            if showDivider {
+                Divider()
+                    .background(FinPilotColors.divider.opacity(0.5))
+                    .padding(.leading, 66)
+            }
+        }
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: - Support & Help Sheet
+struct SupportSheetView: View {
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                FinPilotColors.background.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Hero header
+                        VStack(spacing: 8) {
+                            ZStack {
+                                Circle()
+                                    .fill(FinPilotColors.primary.opacity(0.12))
+                                    .frame(width: 64, height: 64)
+                                Image(systemName: "questionmark.circle.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(FinPilotColors.primary)
+                            }
+                            
+                            Text("Financy Support")
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(FinPilotColors.textPrimary)
+                            
+                            Text("We're here to help you manage your financial journey.")
+                                .font(.system(size: 14))
+                                .foregroundColor(FinPilotColors.textSecondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 24)
+                        }
+                        .padding(.top, 16)
+                        
+                        // Contact Card
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("DIRECT CONTACT")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .foregroundColor(FinPilotColors.textSecondary)
+                            
+                            Link(destination: URL(string: "mailto:support@financy.app?subject=Financy%20Support%20Request")!) {
+                                HStack(spacing: 14) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(FinPilotColors.primary.opacity(0.12))
+                                            .frame(width: 40, height: 40)
+                                        Image(systemName: "envelope.fill")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(FinPilotColors.primary)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Email Support Team")
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundColor(FinPilotColors.textPrimary)
+                                        Text("support@financy.app")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(FinPilotColors.primary)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "arrow.up.right")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(FinPilotColors.textSecondary)
+                                }
+                                .padding(14)
+                                .background(FinPilotColors.surface)
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(FinPilotColors.border.opacity(0.7), lineWidth: 1)
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // FAQ Card
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("FREQUENTLY ASKED QUESTIONS")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .foregroundColor(FinPilotColors.textSecondary)
+                            
+                            VStack(spacing: 0) {
+                                faqRow(
+                                    question: "What is Lifetime Premium?",
+                                    answer: "A single, one-time purchase of $9.99 grants you unlimited access to all Financy features forever with no subscriptions."
+                                )
+                                Divider().padding(.leading, 16)
+                                faqRow(
+                                    question: "Is my financial data encrypted?",
+                                    answer: "Yes, all authentication tokens, personal details, and financial logs are securely stored with industry-grade encryption."
+                                )
+                                Divider().padding(.leading, 16)
+                                faqRow(
+                                    question: "Can I export my data to Excel / Sheets?",
+                                    answer: "Yes! Use the 'Export Data (CSV)' option in Settings anytime to download your complete transaction ledger as a spreadsheet.",
+                                    showDivider: false
+                                )
+                            }
+                            .background(FinPilotColors.surface)
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(FinPilotColors.border.opacity(0.7), lineWidth: 1)
+                            )
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.bottom, 30)
+                }
+            }
+            .navigationTitle("Help & Support")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(FinPilotColors.primary)
+                }
+            }
+        }
+    }
+    
+    private func faqRow(question: String, answer: String, showDivider: Bool = true) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(question)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(FinPilotColors.textPrimary)
+            Text(answer)
+                .font(.system(size: 13))
+                .foregroundColor(FinPilotColors.textSecondary)
+                .lineSpacing(2)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Legacy SettingsRow (Maintained for Backward Compatibility)
 struct SettingsRow: View {
     let icon: String
     let title: String
     let color: Color
     
     var body: some View {
-        HStack {
+        HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(.system(size: 16, weight: .medium))
                 .foregroundColor(color)
-                .frame(width: 40, height: 40)
-                .background(color.opacity(0.15))
-                .clipShape(Circle())
+                .frame(width: 36, height: 36)
+                .background(color.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             
             Text(title)
-                .font(FinPilotTypography.headline)
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(FinPilotColors.textPrimary)
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .foregroundColor(FinPilotColors.textSecondary)
-                .font(.caption)
+                .foregroundColor(FinPilotColors.textSecondary.opacity(0.5))
+                .font(.system(size: 13, weight: .semibold))
         }
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(FinPilotColors.surface)
         .cornerRadius(16)
     }

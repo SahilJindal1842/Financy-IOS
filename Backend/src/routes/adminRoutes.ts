@@ -12,7 +12,7 @@ router.use(requireRole("ADMIN"));
 router.get("/users", async (req: AuthRequest, res: Response) => {
   try {
     const users = await db("users")
-      .select("id", "email", "mobile_number", "name", "role", "status", "avatar", "monthly_income", "currency", "created_at")
+      .select("id", "email", "mobile_number", "name", "role", "status", "avatar", "monthly_income", "currency", "created_at", "deleted_at")
       .orderBy("created_at", "desc");
     res.json(users);
   } catch (error) {
@@ -445,10 +445,52 @@ router.post("/users/:id/reset-password", async (req: AuthRequest, res: Response)
   }
 });
 
-// Admin: Delete User (Soft Delete)
+// Admin: Delete User (Soft Delete or Permanent Hard Delete)
 router.delete("/users/:id", async (req: AuthRequest, res: Response) => {
   try {
-    const count = await db("users").where({ id: req.params.id }).update({
+    const userId = req.params.id;
+    const isPermanent = req.query.permanent === "true" || req.query.hard === "true" || (req.body && req.body.permanent === true);
+
+    // Prevent admin from deleting themselves
+    if (req.user && req.user.id === userId) {
+      return res.status(400).json({ error: "Cannot delete your own admin account while logged in" });
+    }
+
+    const existingUser = await db("users").where({ id: userId }).first();
+    if (!existingUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (isPermanent) {
+      // FULL PERMANENT PURGE FROM THE SYSTEM
+      await db.transaction(async (trx) => {
+        // Delete all child data explicitly to ensure complete purge
+        await trx("transactions").where({ user_id: userId }).del();
+        await trx("recurring_transactions").where({ user_id: userId }).del();
+        await trx("budgets").where({ user_id: userId }).del();
+        await trx("savings_goals").where({ user_id: userId }).del();
+        await trx("monthly_savings").where({ user_id: userId }).del();
+        await trx("categories").where({ user_id: userId }).del();
+        await trx("accounts").where({ user_id: userId }).del();
+        await trx("notifications").where({ user_id: userId }).del();
+        await trx("otps").where({ user_id: userId }).del();
+        await trx("user_identities").where({ user_id: userId }).del();
+        await trx("user_purchases").where({ user_id: userId }).del();
+        await trx("user_trials").where({ user_id: userId }).del();
+
+        // Finally delete the user completely
+        await trx("users").where({ id: userId }).del();
+      });
+
+      return res.json({
+        message: `User ${existingUser.name || existingUser.email} has been completely deleted from the system`,
+        permanent: true,
+        id: userId
+      });
+    }
+
+    // Default Soft Delete / Disable
+    const count = await db("users").where({ id: userId }).update({
       deleted_at: new Date(),
       status: "DISABLED"
     });
@@ -457,9 +499,51 @@ router.delete("/users/:id", async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json({ message: "User disabled successfully" });
+    res.json({ message: "User disabled successfully", permanent: false, id: userId });
   } catch (error) {
     console.error("Admin delete user error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Admin: Dedicated Permanent Delete Route
+router.delete("/users/:id/permanent", async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.params.id;
+
+    if (req.user && req.user.id === userId) {
+      return res.status(400).json({ error: "Cannot delete your own admin account while logged in" });
+    }
+
+    const existingUser = await db("users").where({ id: userId }).first();
+    if (!existingUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    await db.transaction(async (trx) => {
+      await trx("transactions").where({ user_id: userId }).del();
+      await trx("recurring_transactions").where({ user_id: userId }).del();
+      await trx("budgets").where({ user_id: userId }).del();
+      await trx("savings_goals").where({ user_id: userId }).del();
+      await trx("monthly_savings").where({ user_id: userId }).del();
+      await trx("categories").where({ user_id: userId }).del();
+      await trx("accounts").where({ user_id: userId }).del();
+      await trx("notifications").where({ user_id: userId }).del();
+      await trx("otps").where({ user_id: userId }).del();
+      await trx("user_identities").where({ user_id: userId }).del();
+      await trx("user_purchases").where({ user_id: userId }).del();
+      await trx("user_trials").where({ user_id: userId }).del();
+
+      await trx("users").where({ id: userId }).del();
+    });
+
+    res.json({
+      message: `User ${existingUser.name || existingUser.email} has been completely deleted from the system`,
+      permanent: true,
+      id: userId
+    });
+  } catch (error) {
+    console.error("Admin permanent delete user error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

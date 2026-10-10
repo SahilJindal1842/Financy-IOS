@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financy Admin Console — User Management</title>
+  <meta name="description" content="Official Financy Admin Console for managing user accounts, permissions, and system data.">
+  <link rel="icon" type="image/png" href="assets/images/app_icon.png">
+
+  <!-- Google Fonts & Tailwind CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            financy: {
+              50: '#ECFDF5',
+              100: '#D1FAE5',
+              400: '#34D399',
+              500: '#10B981',
+              600: '#059669',
+              900: '#064E3B',
+              950: '#022C22',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #060A12;
+      color: #F8FAFC;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    h1, h2, h3, h4, .brand-font {
+      font-family: 'Outfit', sans-serif;
+    }
+    .glass-panel {
+      background: rgba(13, 20, 36, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card-hover {
+      transition: all 0.25s ease;
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(16, 185, 129, 0.35);
+      box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.2);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-white/5 bg-[#070C16]/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2.5 group">
+          <div class="w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-emerald-500/20 ring-1 ring-white/10 group-hover:ring-emerald-500/50 transition-all">
+            <img src="assets/images/app_icon.png" alt="Financy Logo" class="w-full h-full object-cover">
+          </div>
+          <span class="text-lg font-bold text-white brand-font tracking-tight">Financy</span>
+        </a>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          Admin Console
+        </span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+          <span>Back to Website</span>
+        </a>
+        <div id="header-user-actions" class="hidden flex items-center gap-3 pl-3 border-l border-white/10">
+          <span id="admin-user-badge" class="text-xs font-medium text-slate-300 hidden sm:inline-block">Admin</span>
+          <button id="logout-btn" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/5 text-slate-300 hover:bg-rose-500/20 hover:text-rose-400 border border-white/10 transition-all flex items-center gap-1.5">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- 1. LOGIN VIEW (Shown when unauthenticated) -->
+    <div id="login-section" class="flex items-center justify-center min-h-[70vh]">
+      <div class="glass-panel p-8 sm:p-10 rounded-3xl border border-white/10 max-w-md w-full shadow-2xl relative">
+        <div class="text-center space-y-2 mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/10">
+            <i data-lucide="shield-check" class="w-7 h-7 text-emerald-400"></i>
+          </div>
+          <h1 class="text-2xl font-extrabold text-white">Administrator Sign In</h1>
+          <p class="text-xs text-slate-400">Access the Financy user management directory and system administration tools.</p>
+        </div>
+
+        <div id="login-error-alert" class="hidden mb-6 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 flex-shrink-0"></i>
+          <span id="login-error-text">Invalid administrator credentials.</span>
+        </div>
+
+        <form id="admin-login-form" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Admin Email</label>
+            <div class="relative">
+              <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5"></i>
+              <input type="email" id="login-email" required placeholder="admin@financy.app" class="w-full bg-slate-900/80 border border-white/10 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
+            <div class="relative">
+              <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5"></i>
+              <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-900/80 border border-white/10 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40">
+            </div>
+          </div>
+
+          <button type="submit" id="login-submit-btn" class="w-full mt-2 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer">
+            <span>Authenticate As Admin</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </form>
+
+        <!-- Quick Demo Credentials Helper -->
+        <div class="mt-6 pt-6 border-t border-white/5 text-center space-y-2">
+          <p class="text-[11px] text-slate-500">Default System Admin Credentials:</p>
+          <button id="quick-fill-admin-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-[11px] font-mono text-emerald-400 border border-white/10 hover:border-emerald-500/30 transition-all cursor-pointer">
+            <i data-lucide="key" class="w-3 h-3"></i>
+            <span>admin@financy.app • Admin@123</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. ADMIN DASHBOARD VIEW (Shown when authenticated) -->
+    <div id="dashboard-section" class="hidden space-y-8">
+      
+      <!-- Top Title & Controls -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-white/10">
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white brand-font">User Directory & Management</h1>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Live DB
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            View registered user profiles, status, roles, and manage permanent account deletions.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <button id="refresh-users-btn" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refresh-icon"></i>
+            <span>Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stat Cards Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass-panel p-5 rounded-2xl border border-white/10 space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-semibold uppercase tracking-wider">Total Users</span>
+            <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-white" id="stat-total-users">0</div>
+          <p class="text-[11px] text-slate-500">Registered in system</p>
+        </div>
+
+        <div class="glass-panel p-5 rounded-2xl border border-white/10 space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-semibold uppercase tracking-wider">Active</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-emerald-400" id="stat-active-users">0</div>
+          <p class="text-[11px] text-slate-500">Active accounts</p>
+        </div>
+
+        <div class="glass-panel p-5 rounded-2xl border border-white/10 space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-semibold uppercase tracking-wider">Disabled / Soft</span>
+            <i data-lucide="user-x" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-amber-400" id="stat-disabled-users">0</div>
+          <p class="text-[11px] text-slate-500">Ready for purge</p>
+        </div>
+
+        <div class="glass-panel p-5 rounded-2xl border border-white/10 space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-semibold uppercase tracking-wider">Admins</span>
+            <i data-lucide="shield" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-purple-400" id="stat-admin-users">0</div>
+          <p class="text-[11px] text-slate-500">System administrators</p>
+        </div>
+      </div>
+
+      <!-- Action Toast Banner -->
+      <div id="toast-banner" class="hidden p-4 rounded-2xl border text-xs sm:text-sm font-semibold flex items-center justify-between transition-all">
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="check-circle" id="toast-icon" class="w-4 h-4"></i>
+          <span id="toast-msg">Action performed successfully.</span>
+        </div>
+        <button id="close-toast-btn" class="p-1 hover:opacity-80">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Search & Filters Bar -->
+      <div class="glass-panel p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="relative w-full md:w-96">
+          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
+          <input type="text" id="user-search-input" placeholder="Search by name, email, or ID..." class="w-full bg-slate-900 border border-white/10 rounded-xl pl-10 pr-3.5 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50">
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          <button class="filter-tab-btn active px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-pointer" data-filter="ALL">
+            All Users
+          </button>
+          <button class="filter-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 text-slate-400 hover:text-white border border-white/10 cursor-pointer" data-filter="ACTIVE">
+            Active
+          </button>
+          <button class="filter-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 text-slate-400 hover:text-white border border-white/10 cursor-pointer" data-filter="DISABLED">
+            Disabled / Deleted
+          </button>
+          <button class="filter-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 text-slate-400 hover:text-white border border-white/10 cursor-pointer" data-filter="ADMIN">
+            Admins
+          </button>
+        </div>
+      </div>
+
+      <!-- Users Table Container -->
+      <div class="glass-panel rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="border-b border-white/10 bg-slate-950/60 text-slate-400 text-[11px] uppercase tracking-wider font-semibold">
+                <th class="py-4 px-5">User Profile</th>
+                <th class="py-4 px-4">Role</th>
+                <th class="py-4 px-4">Account Status</th>
+                <th class="py-4 px-4">Monthly Income</th>
+                <th class="py-4 px-4">Joined Date</th>
+                <th class="py-4 px-5 text-right">System Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-white/5 text-slate-300">
+              <!-- Dynamically populated rows -->
+              <tr>
+                <td colspan="6" class="py-12 text-center text-slate-500 text-xs">
+                  <div class="flex flex-col items-center justify-center gap-2">
+                    <i data-lucide="loader" class="w-6 h-6 animate-spin text-emerald-400"></i>
+                    <span>Loading users from database...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- CONFIRMATION MODAL: DELETE USER FULLY FROM SYSTEM -->
+  <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-rose-500/30 max-w-lg w-full space-y-6 shadow-2xl relative bg-[#0B0F19]">
+      
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center flex-shrink-0 text-rose-400 shadow-lg shadow-rose-500/10">
+          <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-xl font-bold text-white">Permanently Delete User Fully from System?</h3>
+          <p class="text-xs text-slate-400">
+            This operation will permanently purge the user and all associated financial data from the database.
+          </p>
+        </div>
+      </div>
+
+      <!-- Target User Card -->
+      <div class="p-4 rounded-2xl bg-slate-900 border border-white/10 space-y-1.5 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400 font-semibold uppercase text-[10px]">Target User:</span>
+          <span id="modal-user-id" class="font-mono text-[10px] text-slate-500">UUID</span>
+        </div>
+        <div class="text-sm font-bold text-white" id="modal-user-name">User Name</div>
+        <div class="text-emerald-400 font-mono text-xs" id="modal-user-email">user@example.com</div>
+      </div>
+
+      <!-- Cascading Purge Warning Box -->
+      <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 space-y-2">
+        <div class="font-bold flex items-center gap-1.5 text-rose-200">
+          <i data-lucide="trash-2" class="w-4 h-4 text-rose-400"></i>
+          <span>The following records will be completely destroyed:</span>
+        </div>
+        <ul class="list-disc list-inside space-y-1 text-[11px] text-rose-200/80 pl-1">
+          <li>User profile, password hash, and auth tokens</li>
+          <li>All connected accounts and cash wallets</li>
+          <li>All transaction records and receipt attachments</li>
+          <li>All recurring bills, radar reminders, and budget categories</li>
+          <li>All savings goals, settlements, and notifications</li>
+        </ul>
+        <p class="text-[10px] text-rose-400 font-semibold pt-1">
+          ⚠️ This action cannot be reversed. The email will become free to register anew.
+        </p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+        <button id="modal-cancel-btn" type="button" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all cursor-pointer">
+          Cancel
+        </button>
+        <button id="modal-confirm-delete-btn" type="button" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+          <span>Confirm Permanent Deletion</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    // State
+    let authToken = localStorage.getItem("financy_admin_token");
+    let adminUser = null;
+    let allUsers = [];
+    let currentFilter = "ALL";
+    let userToDelete = null;
+
+    // Elements
+    const loginSection = document.getElementById("login-section");
+    const dashboardSection = document.getElementById("dashboard-section");
+    const headerUserActions = document.getElementById("header-user-actions");
+    const adminUserBadge = document.getElementById("admin-user-badge");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    const loginForm = document.getElementById("admin-login-form");
+    const loginEmailInput = document.getElementById("login-email");
+    const loginPassInput = document.getElementById("login-password");
+    const loginErrorAlert = document.getElementById("login-error-alert");
+    const loginErrorText = document.getElementById("login-error-text");
+    const quickFillAdminBtn = document.getElementById("quick-fill-admin-btn");
+
+    const usersTableBody = document.getElementById("users-table-body");
+    const userSearchInput = document.getElementById("user-search-input");
+    const refreshUsersBtn = document.getElementById("refresh-users-btn");
+    const refreshIcon = document.getElementById("refresh-icon");
+
+    const statTotal = document.getElementById("stat-total-users");
+    const statActive = document.getElementById("stat-active-users");
+    const statDisabled = document.getElementById("stat-disabled-users");
+    const statAdmin = document.getElementById("stat-admin-users");
+
+    const toastBanner = document.getElementById("toast-banner");
+    const toastMsg = document.getElementById("toast-msg");
+    const closeToastBtn = document.getElementById("close-toast-btn");
+
+    const deleteModal = document.getElementById("delete-modal");
+    const modalUserName = document.getElementById("modal-user-name");
+    const modalUserEmail = document.getElementById("modal-user-email");
+    const modalUserId = document.getElementById("modal-user-id");
+    const modalCancelBtn = document.getElementById("modal-cancel-btn");
+    const modalConfirmBtn = document.getElementById("modal-confirm-delete-btn");
+
+    // Init
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      checkAuth();
+      setupEvents();
+    });
+
+    function setupEvents() {
+      // Quick fill credentials
+      quickFillAdminBtn.addEventListener("click", () => {
+        loginEmailInput.value = "admin@financy.app";
+        loginPassInput.value = "Admin@123";
+      });
+
+      // Login submission
+      loginForm.addEventListener("submit", handleLogin);
+
+      // Logout
+      logoutBtn.addEventListener("click", handleLogout);
+
+      // Refresh
+      refreshUsersBtn.addEventListener("click", () => {
+        refreshIcon.classList.add("animate-spin");
+        fetchUsers().finally(() => {
+          setTimeout(() => refreshIcon.classList.remove("animate-spin"), 500);
+        });
+      });
+
+      // Search
+      userSearchInput.addEventListener("input", renderUsers);
+
+      // Filter tabs
+      document.querySelectorAll(".filter-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".filter-tab-btn").forEach(b => {
+            b.classList.remove("active", "bg-emerald-500/20", "text-emerald-300", "border-emerald-500/40");
+            b.classList.add("bg-white/5", "text-slate-400", "border-white/10");
+          });
+          btn.classList.add("active", "bg-emerald-500/20", "text-emerald-300", "border-emerald-500/40");
+          btn.classList.remove("bg-white/5", "text-slate-400", "border-white/10");
+          currentFilter = btn.getAttribute("data-filter");
+          renderUsers();
+        });
+      });
+
+      // Modal buttons
+      modalCancelBtn.addEventListener("click", () => {
+        deleteModal.classList.add("hidden");
+        userToDelete = null;
+      });
+
+      modalConfirmBtn.addEventListener("click", executePermanentDelete);
+
+      closeToastBtn.addEventListener("click", () => {
+        toastBanner.classList.add("hidden");
+      });
+    }
+
+    // Check existing auth
+    async function checkAuth() {
+      if (!authToken) {
+        showLoginView();
+        return;
+      }
+
+      try {
+        const storedUser = localStorage.getItem("financy_admin_user");
+        if (storedUser) adminUser = JSON.parse(storedUser);
+      } catch (e) {}
+
+      showDashboardView();
+      await fetchUsers();
+    }
+
+    function showLoginView() {
+      loginSection.classList.remove("hidden");
+      dashboardSection.classList.add("hidden");
+      headerUserActions.classList.add("hidden");
+    }
+
+    function showDashboardView() {
+      loginSection.classList.add("hidden");
+      dashboardSection.classList.remove("hidden");
+      headerUserActions.classList.remove("hidden");
+      if (adminUser) {
+        adminUserBadge.textContent = adminUser.name || adminUser.email || "Admin";
+      }
+    }
+
+    // Login API Call
+    async function handleLogin(e) {
+      e.preventDefault();
+      loginErrorAlert.classList.add("hidden");
+      const email = loginEmailInput.value.trim();
+      const password = loginPassInput.value;
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Login failed");
+        }
+
+        if (data.user?.role !== "ADMIN") {
+          throw new Error("Access Denied: This account does not possess administrator privileges.");
+        }
+
+        authToken = data.token;
+        adminUser = data.user;
+        localStorage.setItem("financy_admin_token", authToken);
+        localStorage.setItem("financy_admin_user", JSON.stringify(adminUser));
+
+        showDashboardView();
+        fetchUsers();
+      } catch (err) {
+        loginErrorText.textContent = err.message || "Authentication error.";
+        loginErrorAlert.classList.remove("hidden");
+      }
+    }
+
+    function handleLogout() {
+      authToken = null;
+      adminUser = null;
+      localStorage.removeItem("financy_admin_token");
+      localStorage.removeItem("financy_admin_user");
+      showLoginView();
+    }
+
+    // Fetch Users from API
+    async function fetchUsers() {
+      try {
+        const res = await fetch("/api/admin/users", {
+          headers: {
+            "Authorization": `Bearer ${authToken}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          handleLogout();
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Failed to load user directory.");
+        }
+
+        const raw = await res.json();
+        allUsers = Array.isArray(raw) ? raw : (raw.users || []);
+        updateStats();
+        renderUsers();
+      } catch (err) {
+        showToast("Error loading users: " + err.message, "error");
+      }
+    }
+
+    function updateStats() {
+      statTotal.textContent = allUsers.length;
+      statActive.textContent = allUsers.filter(u => u.status === "ACTIVE").length;
+      statDisabled.textContent = allUsers.filter(u => u.status === "DISABLED" || u.deleted_at).length;
+      statAdmin.textContent = allUsers.filter(u => u.role === "ADMIN").length;
+    }
+
+    // Render User Table
+    function renderUsers() {
+      const q = userSearchInput.value.toLowerCase().trim();
+
+      const filtered = allUsers.filter(u => {
+        const matchesQuery = !q || 
+          (u.name && u.name.toLowerCase().includes(q)) || 
+          (u.email && u.email.toLowerCase().includes(q)) ||
+          (u.id && u.id.toLowerCase().includes(q));
+
+        let matchesFilter = true;
+        if (currentFilter === "ACTIVE") matchesFilter = (u.status === "ACTIVE" && !u.deleted_at);
+        else if (currentFilter === "DISABLED") matchesFilter = (u.status === "DISABLED" || u.deleted_at !== null);
+        else if (currentFilter === "ADMIN") matchesFilter = (u.role === "ADMIN");
+
+        return matchesQuery && matchesFilter;
+      });
+
+      if (filtered.length === 0) {
+        usersTableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-12 text-center text-slate-500 text-xs">
+              No registered users found matching the current search or filter criteria.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      usersTableBody.innerHTML = filtered.map(user => {
+        const isSelf = adminUser && adminUser.id === user.id;
+        const isDisabled = user.status === "DISABLED" || user.deleted_at !== null;
+        const initial = (user.name || user.email || "U").charAt(0).toUpperCase();
+
+        const roleBadge = user.role === "ADMIN" 
+          ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">ADMIN</span>`
+          : `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-white/5">USER</span>`;
+
+        const statusBadge = isDisabled
+          ? `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> DISABLED
+             </span>`
+          : `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ACTIVE
+             </span>`;
+
+        const incomeStr = user.monthly_income 
+          ? `₹ ${Number(user.monthly_income).toLocaleString()}` 
+          : `<span class="text-slate-500">—</span>`;
+
+        const createdDate = user.created_at 
+          ? new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+          : "—";
+
+        return `
+          <tr class="hover:bg-slate-900/50 transition-colors group">
+            <td class="py-4 px-5">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-white text-xs">
+                  ${initial}
+                </div>
+                <div>
+                  <div class="font-bold text-white flex items-center gap-1.5">
+                    <span>${escapeHtml(user.name || "Unnamed User")}</span>
+                    ${isSelf ? '<span class="text-[9px] text-emerald-400 font-semibold">(You)</span>' : ''}
+                  </div>
+                  <div class="text-xs text-slate-400 font-mono">${escapeHtml(user.email)}</div>
+                  <div class="text-[10px] text-slate-500 font-mono mt-0.5">${user.id}</div>
+                </div>
+              </div>
+            </td>
+            <td class="py-4 px-4">${roleBadge}</td>
+            <td class="py-4 px-4">${statusBadge}</td>
+            <td class="py-4 px-4 font-mono">${incomeStr}</td>
+            <td class="py-4 px-4 text-xs text-slate-400">${createdDate}</td>
+            <td class="py-4 px-5 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Toggle Disable / Soft Delete -->
+                ${!isSelf ? `
+                  <button 
+                    onclick="toggleUserStatus('${user.id}', '${user.status}')" 
+                    title="${isDisabled ? 'Re-enable User' : 'Disable User'}" 
+                    class="p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer">
+                    <i data-lucide="${isDisabled ? 'check-circle' : 'ban'}" class="w-3.5 h-3.5 ${isDisabled ? 'text-emerald-400' : 'text-amber-400'}"></i>
+                  </button>
+                ` : ''}
+
+                <!-- PERMANENT PURGE FROM SYSTEM BUTTON -->
+                ${!isSelf ? `
+                  <button 
+                    onclick="promptPermanentDelete('${user.id}')" 
+                    title="Permanently Delete User Fully From System" 
+                    class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 hover:border-rose-500/50 transition-all active:scale-95 cursor-pointer">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400"></i>
+                    <span class="hidden sm:inline">Delete User</span>
+                  </button>
+                ` : `
+                  <span class="text-[10px] text-slate-500 px-2 py-1">Protected</span>
+                `}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      lucide.createIcons();
+    }
+
+    // Toggle status (Soft delete / reactivate)
+    window.toggleUserStatus = async function(userId, currentStatus) {
+      const nextStatus = currentStatus === "ACTIVE" ? "DISABLED" : "ACTIVE";
+      try {
+        const res = await fetch(`/api/admin/users/${userId}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${authToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ status: nextStatus })
+        });
+
+        if (!res.ok) throw new Error("Status update failed");
+
+        showToast(`User status updated to ${nextStatus}`, "success");
+        fetchUsers();
+      } catch (err) {
+        showToast("Error updating status: " + err.message, "error");
+      }
+    };
+
+    // Prompt Permanent Delete Modal
+    window.promptPermanentDelete = function(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) return;
+
+      userToDelete = user;
+      modalUserName.textContent = user.name || "Unnamed User";
+      modalUserEmail.textContent = user.email;
+      modalUserId.textContent = user.id;
+
+      deleteModal.classList.remove("hidden");
+    };
+
+    // Execute Permanent Delete via API
+    async function executePermanentDelete() {
+      if (!userToDelete) return;
+      const target = userToDelete;
+
+      modalConfirmBtn.disabled = true;
+      modalConfirmBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i><span>Purging User Data...</span>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`/api/admin/users/${target.id}?permanent=true`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${authToken}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to delete user permanently");
+        }
+
+        deleteModal.classList.add("hidden");
+        userToDelete = null;
+
+        showToast(`User "${target.email}" and all associated data have been permanently deleted from the system.`, "success");
+        fetchUsers();
+      } catch (err) {
+        showToast("Deletion failed: " + err.message, "error");
+      } finally {
+        modalConfirmBtn.disabled = false;
+        modalConfirmBtn.innerHTML = `<i data-lucide="trash-2" class="w-4 h-4"></i><span>Confirm Permanent Deletion</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    function showToast(message, type = "success") {
+      toastMsg.textContent = message;
+      toastBanner.classList.remove("hidden", "bg-emerald-500/10", "border-emerald-500/30", "text-emerald-300", "bg-rose-500/10", "border-rose-500/30", "text-rose-300");
+
+      const icon = document.getElementById("toast-icon");
+      if (type === "success") {
+        toastBanner.classList.add("bg-emerald-500/10", "border-emerald-500/30", "text-emerald-300");
+        icon.setAttribute("data-lucide", "check-circle");
+        icon.classList.remove("text-rose-400");
+        icon.classList.add("text-emerald-400");
+      } else {
+        toastBanner.classList.add("bg-rose-500/10", "border-rose-500/30", "text-rose-300");
+        icon.setAttribute("data-lucide", "alert-circle");
+        icon.classList.remove("text-emerald-400");
+        icon.classList.add("text-rose-400");
+      }
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toastBanner.classList.add("hidden");
+      }, 6000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/[&<>"']/g, m => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[m]));
+    }
+  </script>
+
+</body>
+</html>

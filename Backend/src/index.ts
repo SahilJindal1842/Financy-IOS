@@ -123,17 +123,27 @@ app.get("/", (req: Request, res: Response) => {
   for (const candidate of candidateWebsitePaths) {
     const indexPath = path.join(candidate, "index.html");
     if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
+      return res.sendFile(indexPath, { dotfiles: "allow" });
     }
   }
   res.status(200).send("Financy API Online");
+});
+
+app.get("/admin", (req: Request, res: Response) => {
+  for (const candidate of candidateWebsitePaths) {
+    const adminPath = path.resolve(candidate, "admin.html");
+    if (fs.existsSync(adminPath)) {
+      return res.sendFile(adminPath, { dotfiles: "allow" });
+    }
+  }
+  res.redirect("/admin.html");
 });
 
 app.get("/privacy", (req: Request, res: Response) => {
   for (const candidate of candidateWebsitePaths) {
     const privacyPath = path.resolve(candidate, "privacy.html");
     if (fs.existsSync(privacyPath)) {
-      return res.sendFile(privacyPath);
+      return res.sendFile(privacyPath, { dotfiles: "allow" });
     }
   }
   res.redirect("/privacy.html");
@@ -143,7 +153,7 @@ app.get("/terms", (req: Request, res: Response) => {
   for (const candidate of candidateWebsitePaths) {
     const termsPath = path.resolve(candidate, "terms.html");
     if (fs.existsSync(termsPath)) {
-      return res.sendFile(termsPath);
+      return res.sendFile(termsPath, { dotfiles: "allow" });
     }
   }
   res.redirect("/terms.html");

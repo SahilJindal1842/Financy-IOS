@@ -267,8 +267,12 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
-  deleteUser: (id: string) =>
-    request<{ message: string }>(`/api/admin/users/${id}`, {
+  deleteUser: (id: string, permanent: boolean = false) =>
+    request<{ message: string; permanent?: boolean }>(`/api/admin/users/${id}${permanent ? "?permanent=true" : ""}`, {
+      method: "DELETE",
+    }),
+  deleteUserPermanently: (id: string) =>
+    request<{ message: string; permanent: boolean }>(`/api/admin/users/${id}/permanent`, {
       method: "DELETE",
     }),
   resetPassword: (id: string, newPassword: string) =>

@@ -168,6 +168,25 @@ export default function UsersPage() {
     }
   };
 
+  const handlePermanentDeleteUser = async (user: User) => {
+    const confirmation = prompt(
+      `⚠️ PERMANENT DELETION WARNING:\n\nThis will completely purge ${user.name} (${user.email}) and ALL associated financial data from the database permanently.\n\nType DELETE to confirm:`
+    );
+    if (confirmation !== "DELETE") {
+      if (confirmation !== null) alert("Deletion cancelled. You must type DELETE to confirm.");
+      return;
+    }
+
+    try {
+      await api.deleteUserPermanently(user.id);
+      setActionSuccess(`User ${user.email} and all data were permanently deleted from the system.`);
+      setTimeout(() => setActionSuccess(null), 4000);
+      loadUsers();
+    } catch (err: any) {
+      setActionError("Failed to permanently delete user: " + err.message);
+    }
+  };
+
   const filteredUsers = users.filter((u) => {
     const q = search.toLowerCase();
     const matchesSearch =
@@ -472,13 +491,24 @@ export default function UsersPage() {
                       {user.status === "ACTIVE" ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
                     </Button>
 
-                    {/* Delete */}
+                    {/* Disable (Soft) */}
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteUser(user)}
-                      className="h-8 w-8 text-slate-400 hover:text-rose-600"
-                      title="Disable User"
+                      className="h-8 w-8 text-slate-400 hover:text-amber-600"
+                      title="Disable User (Soft Delete)"
+                    >
+                      <Ban className="h-4 w-4" />
+                    </Button>
+
+                    {/* Permanently Delete Fully From System */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handlePermanentDeleteUser(user)}
+                      className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                      title="Permanently Delete User Fully from System"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

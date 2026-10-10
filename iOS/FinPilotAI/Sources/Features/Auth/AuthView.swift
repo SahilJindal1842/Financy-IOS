@@ -145,9 +145,9 @@ struct ModernLoginView: View {
     let onSwitchToSignUp: () -> Void
     
     @State private var loginMethod: Int = 0 // 0: Email, 1: Mobile
-    @State private var email = "demo@financy.app"
+    @State private var email = ""
     @State private var mobile = ""
-    @State private var password = "Password@123"
+    @State private var password = ""
     @State private var showPassword = false
     @State private var rememberMe = true
     @State private var showingSocialDialog = false
@@ -243,52 +243,6 @@ struct ModernLoginView: View {
                 }
             }
             .padding(.top, 6)
-            
-            // Demo Quick Login
-            Button(action: {
-                email = "demo@financy.app"
-                password = "Password@123"
-                loginMethod = 0
-                Task {
-                    await viewModel.login(email: "demo@financy.app", password: "Password@123")
-                }
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 13))
-                    Text("Demo Quick Login (₹20k Income / ₹10k Budget)")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(FinPilotColors.primary)
-                .cornerRadius(12)
-            }
-            .padding(.top, 4)
-            
-            // Admin Quick Login
-            Button(action: {
-                email = "admin@financy.app"
-                password = "Admin@123"
-                loginMethod = 0
-                Task {
-                    await viewModel.login(email: "admin@financy.app", password: "Admin@123")
-                }
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "shield.lefthalf.filled")
-                        .font(.system(size: 13))
-                    Text("Admin Quick Login (admin@financy.app)")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                }
-                .foregroundColor(FinPilotColors.primary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(FinPilotColors.primary.opacity(0.1))
-                .cornerRadius(12)
-            }
-            .padding(.top, 2)
         }
         .sheet(isPresented: $showingSocialDialog) {
             SocialAuthModalView(

@@ -165,15 +165,31 @@ function setupThemeToggle() {
   const themeBtn = document.getElementById("theme-toggle-btn");
   if (!themeBtn) return;
 
-  const currentTheme = localStorage.getItem("financy-theme") || "dark";
-  if (currentTheme === "light") {
-    document.documentElement.classList.add("light");
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentTheme = urlParams.get("theme") || localStorage.getItem("financy-theme") || "dark";
+  
+  function applyTheme(isLight) {
+    if (isLight) {
+      document.documentElement.classList.add("light");
+      themeBtn.innerHTML = `<i data-lucide="moon" class="w-4 h-4 text-indigo-500"></i>`;
+      themeBtn.setAttribute("title", "Switch to Dark Theme");
+    } else {
+      document.documentElement.classList.remove("light");
+      themeBtn.innerHTML = `<i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>`;
+      themeBtn.setAttribute("title", "Switch to Light Theme");
+    }
+    if (window.lucide) window.lucide.createIcons();
   }
+
+  const initialLight = currentTheme === "light";
+  applyTheme(initialLight);
+  localStorage.setItem("financy-theme", initialLight ? "light" : "dark");
 
   themeBtn.addEventListener("click", () => {
     playHapticSound("click");
-    const isLight = document.documentElement.classList.toggle("light");
-    localStorage.setItem("financy-theme", isLight ? "light" : "dark");
+    const isNowLight = !document.documentElement.classList.contains("light");
+    applyTheme(isNowLight);
+    localStorage.setItem("financy-theme", isNowLight ? "light" : "dark");
   });
 }
 

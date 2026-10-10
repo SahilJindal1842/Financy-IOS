@@ -12,31 +12,143 @@
 
 html.light {
   --color-bg-dark: #F8FAFC;
-  --color-bg-card: rgba(255, 255, 255, 0.9);
-  --color-border: rgba(0, 0, 0, 0.08);
+  --color-bg-card: #FFFFFF;
+  --color-border: #E2E8F0;
   color-scheme: light;
 }
 
 html.light body {
-  background-color: #F8FAFC;
-  color: #0F172A;
-}
-
-html.light .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
-}
-
-html.light .glass-nav {
-  background: rgba(255, 255, 255, 0.92);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-html.light .text-white {
+  background-color: #F8FAFC !important;
   color: #0F172A !important;
 }
 
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light h5,
+html.light h6 {
+  color: #0F172A !important;
+}
+
+html.light p {
+  color: #475569 !important;
+}
+
+/* Gradients and Ambient Glows */
+html.light .bg-glow-emerald {
+  background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.10) 0%, rgba(16, 185, 129, 0) 70%) !important;
+}
+
+html.light .bg-glow-indigo {
+  background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%) !important;
+}
+
+html.light .bg-glow-sky {
+  background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.08) 0%, rgba(14, 165, 233, 0) 70%) !important;
+}
+
+html.light .text-gradient-white {
+  background: linear-gradient(180deg, #0F172A 0%, #334155 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Glass Panels, Cards & Navigation */
+html.light .glass-panel {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03) !important;
+}
+
+html.light .glass-card-hover:hover {
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  box-shadow: 0 20px 35px -10px rgba(16, 185, 129, 0.14) !important;
+}
+
+html.light .glass-nav {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: #E2E8F0 !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+html.light .glass-nav nav a {
+  color: #475569 !important;
+}
+
+html.light .glass-nav nav a:hover {
+  color: #059669 !important;
+}
+
+html.light .glass-nav a[href="admin.html"],
+html.light .glass-nav .open-qr-modal,
+html.light .glass-nav #sound-toggle-btn,
+html.light .glass-nav #theme-toggle-btn {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #334155 !important;
+}
+
+html.light .glass-nav a[href="admin.html"]:hover,
+html.light .glass-nav .open-qr-modal:hover,
+html.light .glass-nav #sound-toggle-btn:hover,
+html.light .glass-nav #theme-toggle-btn:hover {
+  background-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+/* Section Backgrounds & Borders */
+html.light .border-white\/5,
+html.light .border-white\/10,
+html.light .border-white\/15,
+html.light .border-white\/20 {
+  border-color: #E2E8F0 !important;
+}
+
+html.light .bg-\[\#04070D\]\/50,
+html.light .bg-\[\#04070D\]\/40 {
+  background-color: rgba(241, 245, 249, 0.65) !important;
+}
+
+html.light .bg-\[\#04070D\] {
+  background-color: #F1F5F9 !important;
+}
+
+html.light .bg-\[\#060A12\] {
+  background-color: #F8FAFC !important;
+}
+
+html.light .bg-slate-950\/20,
+html.light .bg-slate-950\/30,
+html.light .bg-slate-950\/40 {
+  background-color: #F1F5F9 !important;
+}
+
+html.light .bg-slate-900,
+html.light .bg-slate-900\/40,
+html.light .bg-slate-900\/50,
+html.light .bg-slate-900\/60,
+html.light .bg-slate-900\/70,
+html.light .bg-slate-900\/80 {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .bg-slate-800,
+html.light .bg-slate-800\/60,
+html.light .bg-slate-800\/80 {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #1E293B !important;
+}
+
+html.light .bg-white\/5,
+html.light .bg-white\/10 {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* General Text Contrast in Light Mode */
 html.light .text-slate-200,
 html.light .text-slate-300 {
   color: #334155 !important;
@@ -46,13 +158,361 @@ html.light .text-slate-400 {
   color: #64748B !important;
 }
 
-html.light .bg-slate-900\/80,
-html.light .bg-slate-900\/70,
-html.light .bg-slate-900\/60,
-html.light .bg-slate-950\/40,
-html.light .bg-slate-950\/30,
-html.light .bg-slate-950\/20 {
-  background-color: rgba(241, 245, 249, 0.85) !important;
+html.light .text-slate-500 {
+  color: #94A3B8 !important;
+}
+
+/* Non-button text-white to dark slate */
+html.light span.text-white:not(.app-store-btn *):not(.bg-emerald-500 *):not(button.bg-emerald-500 *):not(a.bg-emerald-500 *),
+html.light div.text-white:not(.app-store-btn *):not(.bg-emerald-500 *),
+html.light p.text-white {
+  color: #0F172A !important;
+}
+
+/* Hero Section Elements */
+html.light header .glass-panel {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light header .glass-panel span,
+html.light header .glass-panel div {
+  color: #0F172A;
+}
+
+html.light header .glass-panel .text-emerald-400 {
+  color: #059669 !important;
+}
+
+html.light .floating-badge {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.12) !important;
+}
+
+html.light .floating-badge span.text-white {
+  color: #0F172A !important;
+}
+
+html.light .floating-badge span.text-slate-300,
+html.light .floating-badge span.text-slate-400 {
+  color: #64748B !important;
+}
+
+/* Simulator Action Buttons */
+html.light .trigger-splash-btn {
+  background-color: #ECFDF5 !important;
+  border-color: #A7F3D0 !important;
+  color: #047857 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12) !important;
+}
+
+html.light .trigger-splash-btn:hover {
+  background-color: #D1FAE5 !important;
+  border-color: #6EE7B7 !important;
+  color: #065F46 !important;
+}
+
+html.light .trigger-add-tx-btn {
+  background-color: #F0F9FF !important;
+  border-color: #BAE6FD !important;
+  color: #0369A1 !important;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.12) !important;
+}
+
+html.light .trigger-add-tx-btn:hover {
+  background-color: #E0F2FE !important;
+  border-color: #7DD3FC !important;
+  color: #075985 !important;
+}
+
+/* Section 2: Interactive Modules Tabs */
+html.light #preview button:not(.active):not(.trigger-splash-btn):not(.trigger-add-tx-btn) {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #475569 !important;
+}
+
+html.light #preview button:not(.active):not(.trigger-splash-btn):not(.trigger-add-tx-btn):hover {
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+html.light #preview button.border-emerald-500\/50,
+html.light #preview button.active {
+  background-color: #ECFDF5 !important;
+  border-color: #10B981 !important;
+  color: #065F46 !important;
+  font-weight: 700 !important;
+}
+
+/* Section 3: Feature Cards */
+html.light section#features .glass-panel {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light section#features .glass-panel h3 {
+  color: #0F172A !important;
+}
+
+html.light section#features .glass-panel p {
+  color: #475569 !important;
+}
+
+/* Section 4: Interactive Tools */
+html.light section#tools .glass-panel {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light section#tools .bg-slate-950\/80 {
+  background-color: #F8FAFC !important;
+  border: 1px solid #CBD5E1 !important;
+}
+
+html.light #nl-expense-input {
+  color: #0F172A !important;
+}
+
+html.light #nl-expense-input::placeholder {
+  color: #94A3B8 !important;
+}
+
+html.light .nl-preset-btn {
+  background-color: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+  color: #334155 !important;
+}
+
+html.light .nl-preset-btn:hover {
+  background-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+/* Tool 2: Checkboxes */
+html.light .sub-leak-item {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .sub-leak-item:hover {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+}
+
+html.light .sub-leak-item span:first-child {
+  color: #0F172A !important;
+  font-weight: 600 !important;
+}
+
+html.light .sub-leak-item span:last-child {
+  color: #64748B !important;
+}
+
+html.light #annual-leak-drain {
+  background-color: #FEF3C7 !important;
+  border: 1px solid #FDE68A !important;
+}
+
+html.light #annual-leak-drain * {
+  color: #92400E !important;
+}
+
+/* Tool 4: Currency switcher */
+html.light .currency-btn {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #334155 !important;
+}
+
+html.light .currency-btn.active {
+  background-color: #10B981 !important;
+  border-color: #10B981 !important;
+  color: #FFFFFF !important;
+}
+
+/* Tool 5: ROI */
+html.light #roi-competitor-box {
+  background-color: #FFF1F2 !important;
+  border-color: #FECDD3 !important;
+}
+
+html.light #roi-financy-box {
+  background-color: #ECFDF5 !important;
+  border-color: #A7F3D0 !important;
+}
+
+html.light #roi-savings-box {
+  background-color: #F0F9FF !important;
+  border-color: #BAE6FD !important;
+}
+
+/* Section 5: Pricing Cards */
+html.light section#pricing .glass-panel {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light section#pricing .border-2.border-emerald-500\/50 {
+  border-color: #10B981 !important;
+  box-shadow: 0 20px 40px -10px rgba(16, 185, 129, 0.15) !important;
+}
+
+html.light section#pricing h3 {
+  color: #0F172A !important;
+}
+
+html.light section#pricing ul li span {
+  color: #334155 !important;
+}
+
+html.light section#pricing ul li span.font-semibold {
+  color: #0F172A !important;
+}
+
+/* Section 6: Tech Specs Table */
+html.light section:has(table) .glass-panel,
+html.light .divide-y .text-white {
+  color: #0F172A !important;
+}
+
+html.light .divide-y {
+  border-color: #E2E8F0 !important;
+}
+
+/* Section 7: FAQ Accordions */
+html.light .faq-item {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .faq-trigger {
+  color: #0F172A !important;
+}
+
+html.light .faq-trigger:hover {
+  color: #059669 !important;
+}
+
+html.light .faq-content {
+  color: #475569 !important;
+  border-top-color: #F1F5F9 !important;
+}
+
+/* Section 8: CTA Banner */
+html.light .rounded-\[40px\].glass-panel {
+  background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 50%, #FFFFFF 100%) !important;
+  border-color: #A7F3D0 !important;
+  box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.12) !important;
+}
+
+html.light .rounded-\[40px\].glass-panel h2 {
+  color: #064E3B !important;
+}
+
+html.light .rounded-\[40px\].glass-panel p {
+  color: #047857 !important;
+}
+
+/* Footer in Light Mode */
+html.light footer {
+  background-color: #F1F5F9 !important;
+  border-top-color: #E2E8F0 !important;
+}
+
+html.light footer span,
+html.light footer p {
+  color: #64748B !important;
+}
+
+html.light footer .brand-font,
+html.light footer .text-white {
+  color: #0F172A !important;
+}
+
+html.light footer a {
+  color: #475569 !important;
+}
+
+html.light footer a:hover {
+  color: #059669 !important;
+}
+
+/* Preserve High-Contrast Buttons & Badges */
+html.light .app-store-btn {
+  background: #000000 !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.light .app-store-btn,
+html.light .app-store-btn * {
+  color: #FFFFFF !important;
+}
+
+html.light .app-store-btn span.text-slate-300 {
+  color: #94A3B8 !important;
+}
+
+html.light a.bg-emerald-500,
+html.light button.bg-emerald-500 {
+  background-color: #10B981 !important;
+}
+
+html.light a.bg-emerald-500:hover,
+html.light button.bg-emerald-500:hover {
+  background-color: #059669 !important;
+}
+
+html.light a.bg-emerald-500 *,
+html.light button.bg-emerald-500 * {
+  color: #FFFFFF !important;
+}
+
+html.light .bg-emerald-500.text-slate-950,
+html.light .bg-emerald-500.text-slate-950 * {
+  color: #022C22 !important;
+  font-weight: 800 !important;
+}
+
+html.light a.bg-slate-800,
+html.light button.bg-slate-800 {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+html.light a.bg-slate-800:hover,
+html.light button.bg-slate-800:hover {
+  background-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+/* Modal Windows in Light Mode */
+html.light #qr-modal .glass-panel {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25) !important;
+}
+
+html.light #qr-modal h3 {
+  color: #0F172A !important;
+}
+
+html.light #qr-modal p {
+  color: #475569 !important;
+}
+
+html.light #mobile-menu {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light #mobile-menu a {
+  color: #0F172A !important;
 }
 
 * {

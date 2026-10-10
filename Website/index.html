@@ -59,8 +59,8 @@
   <!-- Background Ambient Glows -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
     <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-emerald-500/15 via-emerald-600/5 to-transparent blur-3xl rounded-full"></div>
-    <div class="absolute top-[40%] -left-40 w-[600px] h-[600px] bg-glow-indigo blur-3xl rounded-full"></div>
-    <div class="absolute top-[70%] -right-40 w-[600px] h-[600px] bg-glow-emerald blur-3xl rounded-full"></div>
+    <div class="absolute top-[35%] -left-40 w-[600px] h-[600px] bg-glow-indigo blur-3xl rounded-full"></div>
+    <div class="absolute top-[65%] -right-40 w-[600px] h-[600px] bg-glow-emerald blur-3xl rounded-full"></div>
   </div>
 
   <!-- Navigation Bar -->
@@ -83,21 +83,36 @@
         </a>
 
         <!-- Desktop Nav Links -->
-        <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-          <a href="#features" class="hover:text-emerald-400 transition-colors">Features</a>
-          <a href="#preview" class="hover:text-emerald-400 transition-colors">Interactive App</a>
+        <nav class="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-300">
+          <a href="#preview" class="hover:text-emerald-400 transition-colors">Simulator</a>
+          <a href="#ai-engine" class="hover:text-emerald-400 transition-colors">AI Categorizer</a>
+          <a href="#radar" class="hover:text-emerald-400 transition-colors">Subscription Radar</a>
           <a href="#calculator" class="hover:text-emerald-400 transition-colors">Burn Calculator</a>
+          <a href="#currency" class="hover:text-emerald-400 transition-colors">Multi-Currency</a>
           <a href="#pricing" class="hover:text-emerald-400 transition-colors">Pricing</a>
-          <a href="#faq" class="hover:text-emerald-400 transition-colors">FAQ</a>
         </nav>
 
-        <!-- Right Action CTAs -->
-        <div class="hidden sm:flex items-center gap-3.5">
+        <!-- Right Action CTAs & Controls -->
+        <div class="hidden sm:flex items-center gap-3">
+          
+          <!-- Audio Toggle Button -->
+          <button id="sound-toggle-btn" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-white/10 transition-all" title="Toggle Sound Feedback">
+            <i data-lucide="volume-2" class="w-4 h-4 text-emerald-400"></i>
+            <span class="hidden md:inline">Audio On</span>
+          </button>
+
+          <!-- Light/Dark Mode Switcher -->
+          <button id="theme-toggle-btn" class="p-2 rounded-xl text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-white/10 transition-all" title="Toggle Theme">
+            <i data-lucide="sun-moon" class="w-4 h-4 text-amber-400"></i>
+          </button>
+
+          <!-- Scan QR Button -->
           <button class="open-qr-modal flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-white/10 transition-all">
             <i data-lucide="qr-code" class="w-4 h-4 text-emerald-400"></i>
             <span>Scan QR</span>
           </button>
           
+          <!-- App Store Badge -->
           <a href="https://apps.apple.com/app/financy-smart-budgeting/id6478912345" target="_blank" rel="noopener noreferrer" class="app-store-btn app-store-link">
             <svg class="w-5 h-5 fill-current" viewBox="0 0 170 170">
               <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.67-7.81-11.96-14.34-5.78-8.8-10.27-18.72-13.48-29.77-3.21-11.05-4.82-21.75-4.82-32.1 0-14.3 3.6-26.23 10.8-35.8 7.2-9.57 16.32-14.49 27.36-14.75 4.89 0 10.15 1.3 15.78 3.91 5.63 2.61 9.4 3.97 11.31 4.09 1.63 0 5.64-1.42 12.03-4.26 6.39-2.84 11.89-4.14 16.5-3.91 12.3.65 22.18 5.49 29.64 14.52-10.8 6.53-16.08 15.56-15.86 27.1.22 9.03 3.69 16.63 10.42 22.8 6.73 6.17 14.77 9.68 24.12 10.53-2.12 6.64-4.63 13.08-7.53 19.33zm-30.82-124.6c0 7.07-2.67 13.78-8.01 20.14-5.34 6.36-12 10.35-19.98 11.97-.22-1.09-.33-2.18-.33-3.27 0-6.96 2.89-13.88 8.67-20.76 5.78-6.88 12.78-10.82 21-11.82.11 1.25.17 2.39.17 3.42z"/>
@@ -110,19 +125,20 @@
         </div>
 
         <!-- Mobile Menu Trigger -->
-        <button id="mobile-menu-btn" class="md:hidden p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80">
+        <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80">
           <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
       </div>
     </div>
 
     <!-- Mobile Drawer -->
-    <div id="mobile-menu" class="hidden md:hidden glass-panel border-t border-white/10 px-6 py-6 space-y-4">
-      <a href="#features" class="block text-slate-200 font-medium py-2">Features</a>
-      <a href="#preview" class="block text-slate-200 font-medium py-2">Interactive App</a>
+    <div id="mobile-menu" class="hidden lg:hidden glass-panel border-t border-white/10 px-6 py-6 space-y-4">
+      <a href="#preview" class="block text-slate-200 font-medium py-2">Simulator</a>
+      <a href="#ai-engine" class="block text-slate-200 font-medium py-2">AI Categorizer</a>
+      <a href="#radar" class="block text-slate-200 font-medium py-2">Subscription Radar</a>
       <a href="#calculator" class="block text-slate-200 font-medium py-2">Burn Calculator</a>
+      <a href="#currency" class="block text-slate-200 font-medium py-2">Multi-Currency</a>
       <a href="#pricing" class="block text-slate-200 font-medium py-2">Pricing</a>
-      <a href="#faq" class="block text-slate-200 font-medium py-2">FAQ</a>
       <div class="pt-4 border-t border-white/10 flex flex-col gap-3">
         <a href="https://apps.apple.com/app/financy-smart-budgeting/id6478912345" target="_blank" rel="noopener noreferrer" class="app-store-btn app-store-link justify-center">
           <span class="text-sm font-bold">Download on the App Store</span>
@@ -133,8 +149,8 @@
 
   <main class="relative z-10 pt-28">
 
-    <!-- 1. HERO SECTION -->
-    <section id="hero" class="relative pt-12 pb-24 lg:pt-20 lg:pb-36 overflow-hidden">
+    <!-- 1. HERO SECTION WITH INTERACTIVE IPHONE SIMULATOR -->
+    <section id="hero" class="relative pt-8 pb-20 lg:pt-16 lg:pb-32 overflow-hidden">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
@@ -160,7 +176,20 @@
               The modern personal finance iOS companion built for clarity. Track real-time budget burn rates, eliminate surprise subscription renewals, and manage multi-currency accounts with true lifetime peace of mind.
             </p>
 
-            <!-- CTA Buttons -->
+            <!-- Simulator Quick Triggers Bar -->
+            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1">
+              <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider mr-1">Try In Simulator:</span>
+              <button id="trigger-splash-btn" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 transition-all flex items-center gap-1.5">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                <span>Replay Splash Screen</span>
+              </button>
+              <button id="trigger-add-tx-btn" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/30 transition-all flex items-center gap-1.5">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>Add Transaction (+)</span>
+              </button>
+            </div>
+
+            <!-- Primary CTA Buttons -->
             <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
               <a href="https://apps.apple.com/app/financy-smart-budgeting/id6478912345" target="_blank" rel="noopener noreferrer" class="app-store-btn app-store-link w-full sm:w-auto px-8 py-3.5 rounded-2xl text-base">
                 <svg class="w-6 h-6 fill-current" viewBox="0 0 170 170">
@@ -240,13 +269,84 @@
 
               <!-- Realistic iPhone 16 Pro Mockup -->
               <div class="iphone-frame">
-                <!-- Dynamic Island -->
-                <div class="dynamic-island"></div>
                 
-                <!-- Screen Surface with Actual Simulator Screenshot -->
+                <!-- Screen Surface with Simulator Screenshot -->
                 <div class="iphone-screen">
-                  <img id="phone-mockup-img" src="assets/images/screen_budget.png" alt="Financy Budget Gauge iOS Screen">
+                  
+                  <!-- Dynamic Island (Interactive) -->
+                  <div id="dynamic-island" class="dynamic-island" title="Tap to expand Dynamic Island Live Activity">
+                    <div class="dynamic-island-content flex items-center gap-2 px-3 text-[11px] text-emerald-400 font-bold">
+                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                      <span>Safe Spend: ₹ 1,432 left/day</span>
+                    </div>
+                  </div>
+
+                  <!-- Animated Splash Screen Overlay Inside Phone -->
+                  <div id="phone-splash-overlay" class="phone-splash-overlay">
+                    <div class="splash-logo-glow flex items-center justify-center">
+                      <img src="assets/images/app_icon.png" alt="Financy Splash" class="w-20 h-20 rounded-2xl">
+                    </div>
+                    <h4 class="text-xl font-extrabold text-white brand-font mt-5">Financy</h4>
+                    <p class="text-xs text-slate-400 mt-1">Starting encrypted ledger...</p>
+                    <div class="splash-progress-bar">
+                      <div id="splash-progress-fill" class="splash-progress-fill"></div>
+                    </div>
+                  </div>
+
+                  <!-- Interactive Add Transaction Sheet Inside Phone -->
+                  <div id="phone-tx-sheet" class="phone-tx-sheet">
+                    <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                      <span class="text-sm font-bold text-white">Quick Log Expense</span>
+                      <button id="close-tx-sheet" class="text-slate-400 hover:text-white p-1">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                      </button>
+                    </div>
+                    <div class="space-y-3 pt-3">
+                      <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase">Amount</label>
+                        <input id="tx-amount-input" type="text" value="₹ 450" class="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-white font-bold text-lg outline-none">
+                      </div>
+                      <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase">Quick Category Presets</label>
+                        <div class="flex flex-wrap gap-1.5">
+                          <button class="tx-preset-chip px-2.5 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5" data-amount="₹ 250">☕️ Coffee</button>
+                          <button class="tx-preset-chip px-2.5 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5" data-amount="₹ 480">🚗 Uber</button>
+                          <button class="tx-preset-chip px-2.5 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5" data-amount="₹ 1,200">🍕 Dining</button>
+                        </div>
+                      </div>
+                      <button id="submit-tx-btn" class="w-full mt-2 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition-all">
+                        Log Transaction
+                      </button>
+                    </div>
+                  </div>
+
+                  <img id="phone-mockup-img" src="assets/images/screen_budget.png" alt="Financy iOS Screen">
+
+                  <!-- Interactive Native Tab Bar Inside Phone -->
+                  <div class="phone-bottom-nav">
+                    <button class="phone-tab-btn" data-screen="home" title="Home Tab">
+                      <i data-lucide="home" class="w-4 h-4"></i>
+                      <span>Home</span>
+                    </button>
+                    <button class="phone-tab-btn" data-screen="transactions" title="Transactions Tab">
+                      <i data-lucide="list" class="w-4 h-4"></i>
+                      <span>Ledger</span>
+                    </button>
+                    <button class="phone-tab-btn" data-screen="recurring" title="Recurring Tab">
+                      <i data-lucide="repeat" class="w-4 h-4"></i>
+                      <span>Bills</span>
+                    </button>
+                    <button class="phone-tab-btn active" data-screen="budget" title="Budgets Tab">
+                      <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                      <span>Budgets</span>
+                    </button>
+                    <button class="phone-tab-btn" data-screen="settings" title="Settings Tab">
+                      <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                      <span>More</span>
+                    </button>
+                  </div>
                 </div>
+
               </div>
 
             </div>
@@ -261,7 +361,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase">Interactive Experience</span>
+          <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase">Live Feature Navigator</span>
           <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white">
             Designed for iOS. Built for Perfection.
           </h2>
@@ -271,7 +371,17 @@
         </div>
 
         <!-- Screen Switcher Tabs -->
-        <div class="flex flex-wrap items-center justify-center gap-3 max-w-3xl mx-auto mb-12">
+        <div class="flex flex-wrap items-center justify-center gap-3 max-w-4xl mx-auto mb-12">
+          <button class="screen-tab px-5 py-3 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2" data-screen="home">
+            <i data-lucide="home" class="w-4 h-4 text-emerald-400"></i>
+            <span>Home & Net Worth</span>
+          </button>
+
+          <button class="screen-tab px-5 py-3 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border border-white/5 hover:border-white/20 transition-all flex items-center gap-2" data-screen="transactions">
+            <i data-lucide="list" class="w-4 h-4 text-sky-400"></i>
+            <span>Transaction Ledger</span>
+          </button>
+
           <button class="screen-tab active px-5 py-3 rounded-2xl text-xs sm:text-sm font-semibold glass-panel border transition-all flex items-center gap-2" data-screen="budget">
             <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-400"></i>
             <span>Smart Budgets & Burn</span>
@@ -301,7 +411,7 @@
             </span>
           </div>
           <h3 id="screen-detail-title" class="text-2xl font-bold text-white">
-            Real-Time Budget Burn & Concentric Gauges
+            Concentric Circular Burn Gauges
           </h3>
           <p id="screen-detail-desc" class="text-slate-300 text-sm sm:text-base max-w-xl mx-auto">
             Visual circular gauge dynamically tracks daily safe spend, planned allowances, and month-end pace so you never run out of funds.
@@ -317,7 +427,180 @@
       </div>
     </section>
 
-    <!-- 3. LIVE BUDGET BURN CALCULATOR WIDGET -->
+    <!-- 3. INTERACTIVE FEATURE 1: AI SMART TRANSACTION CATEGORIZER PLAYGROUND -->
+    <section id="ai-engine" class="py-20 lg:py-28 relative">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase">On-Device Intelligence</span>
+          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white">
+            Try the AI Transaction Parser
+          </h2>
+          <p class="text-slate-400 text-base sm:text-lg">
+            Type any raw expense description below or click a sample to see Financy’s automatic classification in action.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          <!-- Input & Sample Chips (7 cols) -->
+          <div class="lg:col-span-7 glass-panel p-8 rounded-3xl border border-white/10 space-y-6">
+            <div class="space-y-2">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Expense Description Input</label>
+              <div class="relative">
+                <input id="ai-expense-input" type="text" placeholder="e.g. Starbucks cappuccino ₹350 with friends" value="Starbucks cappuccino ₹350" class="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-4 text-white text-base outline-none focus:border-emerald-500 transition-all pr-12">
+                <i data-lucide="sparkles" class="w-5 h-5 text-emerald-400 absolute right-4 top-1/2 -translate-y-1/2"></i>
+              </div>
+            </div>
+
+            <!-- Sample Chips -->
+            <div class="space-y-2">
+              <span class="text-xs text-slate-500 font-semibold uppercase">Or try these quick samples:</span>
+              <div class="flex flex-wrap gap-2">
+                <button class="ai-sample-chip px-3 py-1.5 rounded-xl text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5 transition-all" data-text="Uber ride to Terminal 2 ₹850">🚗 Uber ₹850</button>
+                <button class="ai-sample-chip px-3 py-1.5 rounded-xl text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5 transition-all" data-text="Netflix 4K subscription auto-debit ₹649">🔁 Netflix ₹649</button>
+                <button class="ai-sample-chip px-3 py-1.5 rounded-xl text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5 transition-all" data-text="Groceries at Nature's Basket ₹3,200">🛒 Groceries ₹3,200</button>
+                <button class="ai-sample-chip px-3 py-1.5 rounded-xl text-xs bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/5 transition-all" data-text="Consulting freelance payout ₹45,000">💰 Salary ₹45,000</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parsed AI Result Card (5 cols) -->
+          <div class="lg:col-span-5">
+            <div class="glass-panel p-8 rounded-3xl border-2 border-emerald-500/40 shadow-xl shadow-emerald-500/10 space-y-5 bg-slate-900/70">
+              <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="cpu" class="w-4 h-4"></i>
+                  <span>AI Parse Result</span>
+                </span>
+                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/20 text-emerald-300">Confidence: 99.4%</span>
+              </div>
+
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <i id="ai-result-icon" data-lucide="coffee" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <h4 id="ai-result-category" class="text-lg font-bold text-white">Dining & Coffee</h4>
+                  <span id="ai-result-amount" class="text-2xl font-extrabold text-emerald-400 brand-font">₹ 350</span>
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-2 text-xs text-slate-300 border-t border-white/5">
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Assigned Account:</span>
+                  <span id="ai-result-account" class="font-semibold text-white">HDFC Debit Card</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Ledger Impact:</span>
+                  <span id="ai-result-impact" class="font-semibold text-emerald-400">-₹350 from Daily Safe Spend</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. INTERACTIVE FEATURE 2: SUBSCRIPTION DRAIN CALCULATOR -->
+    <section id="radar" class="py-20 lg:py-28 relative border-t border-white/5 bg-slate-950/30">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <span class="text-xs font-bold tracking-widest text-amber-400 uppercase">Subscription Radar</span>
+          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white">
+            Calculate Your Annual Subscription Leak
+          </h2>
+          <p class="text-slate-400 text-base sm:text-lg">
+            Select the services you currently pay for. Financy keeps track of auto-renewals and alerts you 48 hours before charges go through.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          <!-- Checklist Left (7 cols) -->
+          <div class="lg:col-span-7 glass-panel p-8 rounded-3xl border border-white/10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              
+              <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-white/5 hover:border-emerald-500/30 cursor-pointer transition-all">
+                <input type="checkbox" checked class="sub-drain-checkbox w-4 h-4 rounded text-emerald-500 accent-emerald-500" data-cost="649">
+                <div class="flex flex-col text-xs">
+                  <span class="font-bold text-white">Netflix Premium</span>
+                  <span class="text-slate-400">₹649 / month</span>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-white/5 hover:border-emerald-500/30 cursor-pointer transition-all">
+                <input type="checkbox" checked class="sub-drain-checkbox w-4 h-4 rounded text-emerald-500 accent-emerald-500" data-cost="119">
+                <div class="flex flex-col text-xs">
+                  <span class="font-bold text-white">Spotify Individual</span>
+                  <span class="text-slate-400">₹119 / month</span>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-white/5 hover:border-emerald-500/30 cursor-pointer transition-all">
+                <input type="checkbox" checked class="sub-drain-checkbox w-4 h-4 rounded text-emerald-500 accent-emerald-500" data-cost="1999">
+                <div class="flex flex-col text-xs">
+                  <span class="font-bold text-white">ChatGPT Plus</span>
+                  <span class="text-slate-400">₹1,999 / month</span>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-white/5 hover:border-emerald-500/30 cursor-pointer transition-all">
+                <input type="checkbox" checked class="sub-drain-checkbox w-4 h-4 rounded text-emerald-500 accent-emerald-500" data-cost="219">
+                <div class="flex flex-col text-xs">
+                  <span class="font-bold text-white">Apple iCloud+ 200GB</span>
+                  <span class="text-slate-400">₹219 / month</span>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-white/5 hover:border-emerald-500/30 cursor-pointer transition-all">
+                <input type="checkbox" class="sub-drain-checkbox w-4 h-4 rounded text-emerald-500 accent-emerald-500" data-cost="149">
+                <div class="flex flex-col text-xs">
+                  <span class="font-bold text-white">YouTube Premium</span>
+                  <span class="text-slate-400">₹149 / month</span>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-white/5 hover:border-emerald-500/30 cursor-pointer transition-all">
+                <input type="checkbox" class="sub-drain-checkbox w-4 h-4 rounded text-emerald-500 accent-emerald-500" data-cost="1800">
+                <div class="flex flex-col text-xs">
+                  <span class="font-bold text-white">Gym & Fitness Club</span>
+                  <span class="text-slate-400">₹1,800 / month</span>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Total Drain Card Right (5 cols) -->
+          <div class="lg:col-span-5">
+            <div class="glass-panel p-8 rounded-3xl border-2 border-amber-500/40 shadow-xl shadow-amber-500/10 space-y-6 text-center">
+              <div class="w-12 h-12 rounded-2xl mx-auto bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <span class="text-xs text-slate-400 uppercase tracking-wider block">Your Monthly Recurring Burn</span>
+                <span id="sub-drain-monthly" class="text-3xl font-extrabold text-white brand-font block mt-1">₹ 2,986/mo</span>
+              </div>
+              <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                <span class="text-xs text-amber-300 uppercase tracking-wider block">Total Annual Leak</span>
+                <span id="sub-drain-annual" class="text-4xl font-black text-amber-400 brand-font block mt-1">₹ 35,832/yr</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Financy proactively flags unused subscriptions before each billing cycle, helping members save an average of ₹8,400 every year.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. INTERACTIVE FEATURE 3: DAILY SAFE SPEND BURN CALCULATOR -->
     <section id="calculator" class="py-20 lg:py-28 relative">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -326,7 +609,7 @@
           <!-- Explainer Left (5 cols) -->
           <div class="lg:col-span-5 space-y-6">
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-              Interactive Tool
+              Dynamic Budgeting
             </div>
             <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
               Test Financy's <br>
@@ -427,86 +710,50 @@
       </div>
     </section>
 
-    <!-- 4. CORE FEATURES GRID -->
-    <section id="features" class="py-20 lg:py-28 relative border-t border-white/5 bg-slate-950/30">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- 6. INTERACTIVE FEATURE 4: MULTI-CURRENCY CONVERTER -->
+    <section id="currency" class="py-20 lg:py-28 relative border-t border-white/5 bg-slate-950/20">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase">Engineered for Control</span>
+          <span class="text-xs font-bold tracking-widest text-sky-400 uppercase">Global Finance</span>
           <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white">
-            Everything You Need to Build Lasting Wealth.
+            Live Multi-Currency Net Worth
           </h2>
           <p class="text-slate-400 text-base sm:text-lg">
-            No messy spreadsheets or complex financial jargon. Financy turns raw transactions into clear, actionable intelligence.
+            Track bank accounts in India, investment funds in the US, or cards in Europe. Tap a currency to see real-time portfolio conversion.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="glass-panel p-8 sm:p-10 rounded-3xl border border-white/10 max-w-4xl mx-auto space-y-8">
           
-          <!-- Feature 1 -->
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 glass-card-hover space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <i data-lucide="gauge" class="w-6 h-6"></i>
-            </div>
-            <h3 class="text-xl font-bold text-white">Dynamic Circular Burn Gauges</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-              Watch your budget at a glance with concentric guide rings, rounded progress linecaps, and color-coded safe spending zones that adapt as the month progresses.
-            </p>
+          <!-- Currency Buttons -->
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <button class="currency-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 transition-all" data-currency="INR">🇮🇳 INR (₹)</button>
+            <button class="currency-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 transition-all" data-currency="USD">🇺🇸 USD ($)</button>
+            <button class="currency-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 transition-all" data-currency="EUR">🇪🇺 EUR (€)</button>
+            <button class="currency-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 transition-all" data-currency="GBP">🇬🇧 GBP (£)</button>
+            <button class="currency-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 transition-all" data-currency="AED">🇦🇪 AED</button>
           </div>
 
-          <!-- Feature 2 -->
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 glass-card-hover space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <i data-lucide="bell" class="w-6 h-6"></i>
+          <!-- Converted Output Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div class="p-6 rounded-2xl bg-slate-900/80 border border-white/5 text-center">
+              <span class="text-xs text-slate-400 block mb-1">Total Net Worth</span>
+              <span id="currency-net-worth" class="text-3xl font-extrabold text-white brand-font">₹2,45,000</span>
+              <span class="text-[10px] text-emerald-400 block mt-1">+14.2% YoY Growth</span>
             </div>
-            <h3 class="text-xl font-bold text-white">Automated Subscription Radar</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-              Never get surprised by an auto-renewal again. Detects recurring SaaS, gym memberships, and rent, sending native reminders before your card is charged.
-            </p>
-          </div>
 
-          <!-- Feature 3 -->
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 glass-card-hover space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400">
-              <i data-lucide="wallet" class="w-6 h-6"></i>
+            <div class="p-6 rounded-2xl bg-slate-900/80 border border-white/5 text-center">
+              <span class="text-xs text-slate-400 block mb-1">Liquid Bank Cash</span>
+              <span id="currency-liquid" class="text-3xl font-extrabold text-sky-400 brand-font">₹85,000</span>
+              <span class="text-[10px] text-slate-400 block mt-1">Available Reserve</span>
             </div>
-            <h3 class="text-xl font-bold text-white">Multi-Account & Multi-Currency</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-              Manage bank savings, credit cards, cash reserves, and investment balances in USD, INR, EUR, and GBP with real-time net-worth consolidation.
-            </p>
-          </div>
 
-          <!-- Feature 4 -->
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 glass-card-hover space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-              <i data-lucide="fingerprint" class="w-6 h-6"></i>
+            <div class="p-6 rounded-2xl bg-slate-900/80 border border-white/5 text-center">
+              <span class="text-xs text-slate-400 block mb-1">Investments & Assets</span>
+              <span id="currency-invest" class="text-3xl font-extrabold text-indigo-400 brand-font">₹1,60,000</span>
+              <span class="text-[10px] text-slate-400 block mt-1">Compounding</span>
             </div>
-            <h3 class="text-xl font-bold text-white">Native Sign in with Apple & Face ID</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-              Sign in securely using Apple ID with Private Relay, Google OAuth, or verified Email OTP. Unlock instantly with on-device Face ID and Touch ID.
-            </p>
-          </div>
-
-          <!-- Feature 5 -->
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 glass-card-hover space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
-              <i data-lucide="target" class="w-6 h-6"></i>
-            </div>
-            <h3 class="text-xl font-bold text-white">Visual Savings Goals</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-              Plan for vacations, emergency reserves, or major purchases. Track visual milestones with rollover allowances and monthly surplus auto-saving.
-            </p>
-          </div>
-
-          <!-- Feature 6 -->
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 glass-card-hover space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
-            </div>
-            <h3 class="text-xl font-bold text-white">Cloud Encrypted Sync</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-              End-to-end encrypted backup powered by Supabase PostgreSQL. Switch devices or restore seamlessly with zero financial data exposure.
-            </p>
           </div>
 
         </div>
@@ -514,8 +761,62 @@
       </div>
     </section>
 
-    <!-- 5. PRICING & LIFETIME ENTITLEMENT -->
-    <section id="pricing" class="py-20 lg:py-28 relative">
+    <!-- 7. INTERACTIVE FEATURE 5: LIFETIME VALUE VS SUBSCRIPTION FATIGUE CALCULATOR -->
+    <section class="py-20 lg:py-28 relative">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase">Zero Subscription Fatigue</span>
+          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white">
+            How Much Will You Save with Financy?
+          </h2>
+          <p class="text-slate-400 text-base sm:text-lg">
+            Other finance apps charge $9.99/mo (₹820/mo) forever. Financy charges once for lifetime peace of mind.
+          </p>
+        </div>
+
+        <div class="glass-panel p-8 sm:p-10 rounded-3xl border border-white/10 max-w-3xl mx-auto space-y-8">
+          
+          <div class="space-y-3">
+            <div class="flex items-between justify-between text-sm">
+              <span class="font-bold text-slate-300">Years You Plan on Managing Wealth</span>
+              <span id="roi-years-val" class="font-bold text-emerald-400 text-base">3 Years</span>
+            </div>
+            <input id="roi-years-slider" type="range" min="1" max="5" step="1" value="3">
+            <div class="flex justify-between text-[11px] text-slate-500">
+              <span>1 Year</span>
+              <span>3 Years</span>
+              <span>5 Years</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div class="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center">
+              <span class="text-xs text-slate-400 block mb-1">Competitors ($9.99/mo)</span>
+              <span id="roi-competitor-val" class="text-2xl font-black text-rose-400 brand-font">₹ 29,520</span>
+              <span class="text-[10px] text-rose-400/80 block mt-1">Endless recurring fees</span>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+              <span class="text-xs text-slate-400 block mb-1">Financy Lifetime</span>
+              <span id="roi-financy-val" class="text-2xl font-black text-emerald-400 brand-font">₹ 1,999 (One-time)</span>
+              <span class="text-[10px] text-emerald-400/80 block mt-1">Zero recurring cost</span>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-center">
+              <span class="text-xs text-slate-400 block mb-1">Net Cash in Your Pocket</span>
+              <span id="roi-savings-val" class="text-2xl font-black text-sky-400 brand-font">₹ 27,521 Saved!</span>
+              <span class="text-[10px] text-sky-400/80 block mt-1">100% Guaranteed</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 8. PRICING & LIFETIME ENTITLEMENT -->
+    <section id="pricing" class="py-20 lg:py-28 relative border-t border-white/5 bg-slate-950/30">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
@@ -629,91 +930,7 @@
       </div>
     </section>
 
-    <!-- 6. USER TESTIMONIALS -->
-    <section class="py-20 lg:py-28 relative border-t border-white/5 bg-slate-950/20">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase">Loved by Smart Spenders</span>
-          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
-            What Our Early Adopters Are Saying
-          </h2>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 space-y-4">
-            <div class="flex text-amber-400 gap-1">
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-            </div>
-            <p class="text-slate-300 text-sm leading-relaxed italic">
-              "The Daily Safe Spend calculation alone saved me ₹15,000 in my first month. The circular gauge makes staying under budget feel like closing an Apple Fitness ring."
-            </p>
-            <div class="pt-2 border-t border-white/5 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400 text-sm">
-                AR
-              </div>
-              <div>
-                <span class="text-sm font-bold text-white block">Aman Roy</span>
-                <span class="text-xs text-slate-400">Software Architect, Bengaluru</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 space-y-4">
-            <div class="flex text-amber-400 gap-1">
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-            </div>
-            <p class="text-slate-300 text-sm leading-relaxed italic">
-              "Finally an app that doesn't charge $9 every month. The lifetime purchase is a breath of fresh air. Plus, Sign in with Apple keeps everything completely private."
-            </p>
-            <div class="pt-2 border-t border-white/5 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center font-bold text-sky-400 text-sm">
-                PK
-              </div>
-              <div>
-                <span class="text-sm font-bold text-white block">Pooja Kapoor</span>
-                <span class="text-xs text-slate-400">Product Designer, Mumbai</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="glass-panel p-8 rounded-3xl border border-white/10 space-y-4">
-            <div class="flex text-amber-400 gap-1">
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-              <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
-            </div>
-            <p class="text-slate-300 text-sm leading-relaxed italic">
-              "The Subscription Radar caught two subscriptions I completely forgot I was paying for. The app paid for itself on day three. Outstanding build quality."
-            </p>
-            <div class="pt-2 border-t border-white/5 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-bold text-purple-400 text-sm">
-                VS
-              </div>
-              <div>
-                <span class="text-sm font-bold text-white block">Vikram Sen</span>
-                <span class="text-xs text-slate-400">Chartered Accountant, Delhi</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-    <!-- 7. FREQUENTLY ASKED QUESTIONS -->
+    <!-- 9. FREQUENTLY ASKED QUESTIONS -->
     <section id="faq" class="py-20 lg:py-28 relative">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -781,7 +998,7 @@
       </div>
     </section>
 
-    <!-- 8. BOTTOM APP STORE CALL-TO-ACTION BANNER -->
+    <!-- 10. BOTTOM APP STORE CALL-TO-ACTION BANNER -->
     <section class="py-20 lg:py-28 relative overflow-hidden">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -849,8 +1066,9 @@
         <div class="space-y-3">
           <span class="text-sm font-semibold text-white uppercase tracking-wider block">Product</span>
           <ul class="space-y-2">
-            <li><a href="#features" class="hover:text-emerald-400 transition-colors">Features</a></li>
-            <li><a href="#preview" class="hover:text-emerald-400 transition-colors">App Preview</a></li>
+            <li><a href="#preview" class="hover:text-emerald-400 transition-colors">iOS Simulator</a></li>
+            <li><a href="#ai-engine" class="hover:text-emerald-400 transition-colors">AI Categorizer</a></li>
+            <li><a href="#radar" class="hover:text-emerald-400 transition-colors">Subscription Radar</a></li>
             <li><a href="#calculator" class="hover:text-emerald-400 transition-colors">Daily Safe Spend</a></li>
             <li><a href="#pricing" class="hover:text-emerald-400 transition-colors">Lifetime Premium</a></li>
           </ul>

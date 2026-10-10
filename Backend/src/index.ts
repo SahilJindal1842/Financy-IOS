@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import path from "path";
+import fs from "fs";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -38,6 +39,7 @@ app.set("trust proxy", 1);
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
   })
 );
 
@@ -72,6 +74,21 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Static uploads with cross-origin caching
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads"), { maxAge: "7d" }));
 
+// Static Website Landing Page
+const candidateWebsitePaths = [
+  path.join(process.cwd(), "public"),
+  path.join(process.cwd(), "Website"),
+  path.join(__dirname, "../public"),
+  path.join(__dirname, "../../Website"),
+];
+
+for (const candidate of candidateWebsitePaths) {
+  if (fs.existsSync(candidate)) {
+    app.use(express.static(candidate));
+    break;
+  }
+}
+
 // Rate limiter for authentication routes
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -97,6 +114,37 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/entitlements", entitlementRoutes);
 app.use("/api/purchases", entitlementRoutes);
+
+// Root Landing Page & Legal Routes
+app.get("/", (req: Request, res: Response) => {
+  for (const candidate of candidateWebsitePaths) {
+    const indexPath = path.join(candidate, "index.html");
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+  }
+  res.status(200).send("Financy API Online");
+});
+
+app.get("/privacy", (req: Request, res: Response) => {
+  for (const candidate of candidateWebsitePaths) {
+    const privacyPath = path.resolve(candidate, "privacy.html");
+    if (fs.existsSync(privacyPath)) {
+      return res.sendFile(privacyPath);
+    }
+  }
+  res.redirect("/privacy.html");
+});
+
+app.get("/terms", (req: Request, res: Response) => {
+  for (const candidate of candidateWebsitePaths) {
+    const termsPath = path.resolve(candidate, "terms.html");
+    if (fs.existsSync(termsPath)) {
+      return res.sendFile(termsPath);
+    }
+  }
+  res.redirect("/terms.html");
+});
 
 // Health check endpoints for load balancers and orchestrators
 app.get("/health", (req: Request, res: Response) => {
